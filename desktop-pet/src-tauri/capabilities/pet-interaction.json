@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "pet-interaction",
+  "description": "Allow only the three pet windows to start native dragging and measure real window movement. Pixel passthrough uses label-checked Rust commands.",
+  "windows": ["pet-airui", "pet-nangong", "pet-qianxia"],
+  "permissions": [
+    "core:window:allow-start-dragging",
+    "core:window:allow-outer-position",
+    "core:window:allow-scale-factor"
+  ]
+}

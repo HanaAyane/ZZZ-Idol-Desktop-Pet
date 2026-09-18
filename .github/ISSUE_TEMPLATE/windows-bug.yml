@@ -1,0 +1,113 @@
+name: Windows 11 测试问题
+description: 回报桌宠在 Windows 11 实机上的功能、显示、安装或性能问题
+title: "[Windows] "
+labels: ["windows", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请从测试包内的 `BUILD-INFO.txt` 复制版本信息。截图或 10～30 秒录屏通常最有帮助。
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit / 测试版本
+      description: 例如 commit 前 7 位和 Test version
+      placeholder: "f1c1f55 / 0.1.12"
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 版本与架构
+      description: 按 Win+R 输入 winver 查看版本；架构写 x64 或 ARM64
+      placeholder: "Windows 11 24H2，OS Build 26100.x，x64"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installer
+    attributes:
+      label: 安装包
+      options:
+        - NSIS .exe
+        - MSI .msi
+        - 两者都测试过
+    validations:
+      required: true
+
+  - type: input
+    id: display
+    attributes:
+      label: 显示器与缩放
+      placeholder: "单屏 2560×1440，150% / 双屏 100% + 150%"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: character
+    attributes:
+      label: 角色
+      options:
+        - 爱芮
+        - 南宫
+        - 千夏
+        - 三名角色都有
+        - 与角色无关
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动桌宠
+        2. 切换到南宫
+        3. 等待向右漫步
+        4. ……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 发生频率
+      options:
+        - 每次必现
+        - 经常发生
+        - 偶尔发生
+        - 只发生过一次
+    validations:
+      required: true
+
+  - type: textarea
+    id: attachments
+    attributes:
+      label: 截图、录屏和补充信息
+      description: 可直接拖入文件；请说明重启应用或重启 Windows 后是否仍能复现。
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已确认测试包中的 commit 和 Test version
+          required: true
+        - label: 我已确认安装时没有同时保留 NSIS 与 MSI 两种安装来源
+          required: true

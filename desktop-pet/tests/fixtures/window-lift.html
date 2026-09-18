@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <base href="/" />
+  <title>托举手掌贴边核验</title>
+  <style>
+    body { margin: 24px; background: #edf1f6; color: #263347; font: 16px system-ui; }
+    h1 { font-size: 22px; }
+    main { display: flex; gap: 12px; }
+    section { flex: 1; min-width: 310px; }
+    .scene { height: 620px; position: relative; overflow: hidden; background: white; }
+    .target { position: absolute; inset: 0 0 auto; height: 130px; box-sizing: border-box;
+      background: #dbe6f5; border-bottom: 2px solid #e14861; }
+    .target span { position: absolute; bottom: 8px; left: 12px; font-size: 13px; }
+    .pet { position: absolute; width: 520px; height: 600px; }
+    .spine-canvas { display: block; width: 100%; height: 100%; }
+    output { display: block; margin-top: 10px; font: 12px monospace; }
+    select { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>真实渲染器 · 三人托举贴边核验</h1>
+  <p>红线是模拟窗口底边。此页验证渲染几何，不模拟原生窗口枚举、拖动或权限。</p>
+  <label>人物大小 <select id="scale"><option value="0.6">60%</option><option value="1">100%</option></select></label>
+  <main></main>
+  <script type="module">
+    import { CHARACTERS } from '/src/characters/index.ts';
+    import { getLiftAction, liftCharacterDefinition } from '/src/pet/specialActions.ts';
+    import { SpineRenderer } from '/src/renderer/SpineRenderer.ts';
+    const entries = [];
+    function align({ renderer, pet, scene, output }) {
+      renderer.setCharacterScale(Number(document.querySelector('#scale').value));
+      const g = renderer.getWindowLiftGeometry();
+      if (!g) return;
+      pet.style.left = `${scene.clientWidth / 2 - g.handXCss}px`;
+      pet.style.top = `${130 - g.handYCss}px`;
+      output.textContent = `手掌 y=${g.handYCss.toFixed(1)} CSS px · 可见高度 ${g.visibleBounds.height.toFixed(1)} · 已就绪`;
+    }
+    for (const base of CHARACTERS) {
+      const section = document.createElement('section');
+      section.innerHTML = `<h2>${base.displayName}</h2><div class="scene"><div class="target"><span>模拟窗口底边</span></div><div class="pet"></div></div><output>加载中…</output>`;
+      document.querySelector('main').appendChild(section);
+      const scene = section.querySelector('.scene'), pet = section.querySelector('.pet');
+      const output = section.querySelector('output');
+      try {
+        const renderer = new SpineRenderer(pet);
+        const action = await getLiftAction(base.id);
+        await renderer.loadCharacter(liftCharacterDefinition(base, action));
+        const entry = { renderer, pet, scene, output };
+        entries.push(entry);
+        align(entry);
+      } catch (error) { output.textContent = `失败：${error}`; }
+    }
+    entries.forEach(align);
+    document.querySelector('#scale').addEventListener('change', () => entries.forEach(align));
+    window.addEventListener('resize', () => entries.forEach(align));
+    window.addEventListener('pagehide', () => entries.forEach(({renderer}) => renderer.dispose()));
+  </script>
+</body>
+</html>

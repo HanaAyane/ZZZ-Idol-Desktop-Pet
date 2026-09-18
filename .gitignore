@@ -1,0 +1,42 @@
+# macOS and editor metadata
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local agent/workspace state
+.codex/
+.reasonix/
+
+# Dependencies and frontend build output
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+
+# Rust and Tauri build output
+**/target/
+**/windows-artifacts/
+**/tauri.windows-ci.conf.json
+
+# Logs and local-only configuration
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.local
+.env
+.env.*
+!.env.example
+
+# Test and coverage output
+coverage/
+test-results/
+playwright-report/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak

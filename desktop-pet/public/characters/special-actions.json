@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "actions": [
+    {
+      "id": "lift",
+      "displayName": "向上托举",
+      "characterId": "airui",
+      "assetId": "airui_lift",
+      "assetRoot": "./characters/airui_lift",
+      "bodyAction": "动作_托举",
+      "overlay": "表情_使劲",
+      "skin": "default",
+      "loop": true,
+      "contactSlots": ["手l_a", "手r_a"],
+      "snapDistanceCss": 72,
+      "recoveryAction": "动作_待机",
+      "recoveryOverlay": "表情_常态"
+    },
+    {
+      "id": "lift",
+      "displayName": "向上托举",
+      "characterId": "nangong",
+      "assetId": "nangong_lift",
+      "assetRoot": "./characters/nangong_lift",
+      "bodyAction": "动作_托举",
+      "overlay": "表情_使劲",
+      "skin": "default",
+      "loop": true,
+      "contactSlots": ["手l", "手r"],
+      "snapDistanceCss": 72,
+      "recoveryAction": "动作_待机",
+      "recoveryOverlay": "表情_常态"
+    },
+    {
+      "id": "lift",
+      "displayName": "向上托举",
+      "characterId": "qianxia",
+      "assetId": "qianxia_lift",
+      "assetRoot": "./characters/qianxia_lift",
+      "bodyAction": "动作_托举",
+      "overlay": "表情_使劲",
+      "skin": "default",
+      "loop": true,
+      "contactSlots": ["手L", "手R"],
+      "snapDistanceCss": 72,
+      "recoveryAction": "动作_待机",
+      "recoveryOverlay": "表情_常态"
+    }
+  ]
+}

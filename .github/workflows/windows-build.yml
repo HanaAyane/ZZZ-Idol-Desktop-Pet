@@ -1,0 +1,104 @@
+name: Windows x64 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/windows-build.yml"
+      - "desktop-pet/**"
+      - "WINDOWS-TESTING.md"
+  pull_request:
+    paths:
+      - ".github/workflows/windows-build.yml"
+      - "desktop-pet/**"
+      - "WINDOWS-TESTING.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-x64-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Validate and bundle Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    defaults:
+      run:
+        working-directory: desktop-pet
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop-pet/package-lock.json
+
+      - name: Set up stable Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Validate phases 2 through 7 and Windows preparation
+        run: npm run validate:windows-prep
+
+      - name: Compile frontend
+        run: npm run build
+
+      - name: Check Rust workspace
+        run: cargo check --manifest-path src-tauri/Cargo.toml --locked --target x86_64-pc-windows-msvc
+
+      - name: Generate unique test version
+        id: version
+        shell: pwsh
+        run: |
+          $version = "0.1.${{ github.run_number }}"
+          @{ version = $version } | ConvertTo-Json | Set-Content -Encoding utf8 src-tauri/tauri.windows-ci.conf.json
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build NSIS and MSI installers
+        run: npm run tauri build -- --target x86_64-pc-windows-msvc --config src-tauri/tauri.windows-ci.conf.json --bundles nsis,msi
+
+      - name: Assemble test package
+        shell: pwsh
+        run: |
+          $output = "windows-artifacts"
+          New-Item -ItemType Directory -Force $output | Out-Null
+          Copy-Item src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe $output
+          Copy-Item src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi $output
+          Copy-Item ../WINDOWS-TESTING.md $output
+
+          @"
+          Repository: ${{ github.repository }}
+          Commit: ${{ github.sha }}
+          Ref: ${{ github.ref }}
+          Run: ${{ github.run_id }}
+          Test version: ${{ steps.version.outputs.value }}
+          Target: x86_64-pc-windows-msvc
+          Runner: windows-2022
+          Built at UTC: $([DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))
+          "@ | Set-Content -Encoding utf8 "$output/BUILD-INFO.txt"
+
+          Get-ChildItem "$output/*" -Include *.exe,*.msi -File |
+            Get-FileHash -Algorithm SHA256 |
+            ForEach-Object { "{0}  {1}" -f $_.Hash.ToLowerInvariant(), $_.Path.Split([IO.Path]::DirectorySeparatorChar)[-1] } |
+            Set-Content -Encoding ascii "$output/SHA256SUMS.txt"
+
+      - name: Upload Windows test installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: AngelofDelusion-deskpet-windows-x64-${{ steps.version.outputs.value }}-${{ github.sha }}
+          path: desktop-pet/windows-artifacts/*
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,37 @@
+{
+  "name": "zzz-idol-desktop-pet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "validate:phase2": "node scripts/validate-phase2.mjs",
+    "validate:phase3": "npm run validate:phase2 && node scripts/validate-phase3.mjs",
+    "validate:phase4": "npm run validate:phase3 && node scripts/validate-phase4.mjs",
+    "validate:phase5": "npm run validate:phase4 && node scripts/validate-phase5.mjs",
+    "validate:phase6": "npm run validate:phase5 && node scripts/validate-phase6.mjs",
+    "validate:phase7": "npm run validate:phase6 && node scripts/validate-phase7.mjs",
+    "validate:coordination": "node scripts/validate-coordination.mjs",
+    "validate:diagnostics": "node scripts/validate-diagnostics.mjs",
+    "validate:lift-action": "node scripts/validate-lift-action.mjs",
+    "validate:window-lift": "node scripts/validate-window-lift.mjs",
+    "validate:windows-prep": "npm run validate:phase7 && npm run validate:coordination && npm run validate:diagnostics && npm run validate:window-lift && npm test && node scripts/validate-windows-prep.mjs"
+  },
+  "dependencies": {
+    "@esotericsoftware/spine-core": "4.2.42",
+    "@esotericsoftware/spine-threejs": "4.2.42",
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-log": "2.9.0",
+    "three": "0.155.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@types/three": "0.155.1",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
+  }
+}

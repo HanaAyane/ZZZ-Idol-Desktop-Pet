@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "pomodoro",
+  "description": "The pomodoro panel can receive timer events and drag its own window.",
+  "windows": ["pomodoro"],
+  "permissions": ["core:event:default", "core:window:allow-start-dragging", "log:default"]
+}

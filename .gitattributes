@@ -1,0 +1,5 @@
+# Keep repository text bytes stable across macOS and Windows checkouts.
+* text=auto eol=lf
+
+# Spine textures are binary assets and must never be line-ending normalized.
+*.png binary

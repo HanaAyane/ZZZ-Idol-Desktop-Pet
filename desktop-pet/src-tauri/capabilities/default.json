@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Allow the three pet windows and settings window to synchronize application settings through Tauri events.",
+  "windows": ["pet-airui", "pet-nangong", "pet-qianxia", "settings"],
+  "permissions": [
+    "core:event:default",
+    "log:default",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
+  ]
+}
