@@ -1205,6 +1205,12 @@ pub fn run() {
         log::error!(target: "desktop_pet::panic", "unhandled Rust panic: {panic_info}");
     }));
     tauri::Builder::default()
+        // Configured WebViews may invoke commands before the setup hook runs.
+        .manage(SettingsWriteLock(Mutex::new(())))
+        .manage(SettingsWindowLock(Mutex::new(())))
+        .manage(CoordinationManager::default())
+        .manage(LastActivePet(Mutex::new(None)))
+        .manage(WindowLiftManager::default())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             log::info!(
                 target: "desktop_pet::lifecycle",
@@ -1254,11 +1260,6 @@ pub fn run() {
             initialize_pet_window
         ])
         .setup(|app| {
-            app.manage(SettingsWriteLock(Mutex::new(())));
-            app.manage(SettingsWindowLock(Mutex::new(())));
-            app.manage(CoordinationManager::default());
-            app.manage(LastActivePet(Mutex::new(None)));
-            app.manage(WindowLiftManager::default());
             app.manage(pomodoro::PomodoroManager::new(app.handle()).map_err(std::io::Error::other)?);
             pomodoro::PomodoroManager::spawn(app.handle().clone());
             #[cfg(target_os = "macos")]
@@ -1437,7 +1438,7 @@ pub fn run() {
                             },
                         );
                     }
-                    "pomodoro_open" => { if let Err(e) = pomodoro::show_window(app) { log::warn!("番茄钟窗口：{e}"); } },
+                    "pomodoro_open" => pomodoro::request_show_window(app.clone()),
                     "show_settings" => request_settings_window(app.clone()),
                     "always_on_top" => {
                         let checked = always_on_top.is_checked().unwrap_or(true);

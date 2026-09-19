@@ -271,6 +271,7 @@ impl ClockState {
 }
 pub struct PomodoroManager {
     inner: Mutex<ClockState>,
+    window_creation: Mutex<()>,
     path: PathBuf,
     audio: AudioService,
 }
@@ -305,6 +306,7 @@ impl PomodoroManager {
         }
         Ok(Self {
             inner: Mutex::new(ClockState::new(snapshot)),
+            window_creation: Mutex::new(()),
             path,
             audio: AudioService::new(),
         })
@@ -456,14 +458,14 @@ pub fn pomodoro_action(
         .command(&app, &action, session_id.as_deref(), preferences)
 }
 #[tauri::command]
-pub fn set_pomodoro_visible(
+pub async fn set_pomodoro_visible(
     window: WebviewWindow,
     app: tauri::AppHandle,
     visible: bool,
 ) -> Result<(), String> {
     require_controller(&window)?;
     if visible {
-        show_window(&app)
+        show_window(app).await
     } else {
         close_window(&app)
     }
@@ -474,12 +476,34 @@ pub fn close_window(app: &tauri::AppHandle) -> Result<(), String> {
     }
     Ok(())
 }
-pub fn show_window(app: &tauri::AppHandle) -> Result<(), String> {
+pub fn request_show_window(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        if let Err(error) = show_window(app).await {
+            log::error!(target: "desktop_pet::pomodoro", "window open failed: {error}");
+        }
+    });
+}
+
+async fn show_window(app: tauri::AppHandle) -> Result<(), String> {
+    // WebView2 creation must not block the Windows command or menu event callback.
+    tauri::async_runtime::spawn_blocking(move || create_or_show_window(&app))
+        .await
+        .map_err(|error| error.to_string())?
+}
+
+fn create_or_show_window(app: &tauri::AppHandle) -> Result<(), String> {
+    let manager = app.state::<PomodoroManager>();
+    // Serialize creation without holding the timer state lock: the new WebView
+    // and its window events can read that state while building.
+    let _creation = manager.window_creation.lock().map_err(|_| "番茄钟窗口创建锁不可用")?;
     if let Some(w) = app.get_webview_window("pomodoro") {
         w.show().map_err(|e| e.to_string())?;
-        return w.set_focus().map_err(|e| e.to_string());
+        w.set_focus().map_err(|e| e.to_string())?;
+        log::info!(target: "desktop_pet::pomodoro", "existing window focused");
+        return Ok(());
     }
-    let saved = app.state::<PomodoroManager>().snapshot();
+    let saved = manager.snapshot();
+    log::info!(target: "desktop_pet::pomodoro", "creating window");
     let w = tauri::WebviewWindowBuilder::new(
         app,
         "pomodoro",
@@ -531,6 +555,7 @@ pub fn show_window(app: &tauri::AppHandle) -> Result<(), String> {
         _ => {}
     });
     app.state::<PomodoroManager>().window_state(app, true, None);
+    log::info!(target: "desktop_pet::pomodoro", "window ready");
     Ok(())
 }
 #[cfg(test)]
