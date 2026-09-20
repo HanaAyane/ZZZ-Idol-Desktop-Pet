@@ -22,6 +22,18 @@
 - **窗口托举** — 将角色拖到普通窗口底边，让她们贴边托举；也可开启漫步时自动托举。
 - **专注陪伴** — 独立番茄钟支持暂停、继续与铃声设置，关闭计时窗口后仍在后台计时。
 
+## 实际效果
+
+<p align="center">
+  <strong>专注陪伴 · 独立番茄钟</strong><br>
+  <a href="assets/readme/pomodoro.webp"><img src="assets/readme/pomodoro.webp" width="800" alt="macOS 桌面上的三位桌宠与独立番茄钟，计时窗口显示 25 分钟专注时间"></a>
+</p>
+
+<p align="center">
+  <strong>一起托举 · 三人贴边互动</strong><br>
+  <a href="assets/readme/window-lift.webp"><img src="assets/readme/window-lift.webp" width="800" alt="爱芮、南宫、千夏同时在同一个窗口底边做托举动作"></a>
+</p>
+
 ## 下载安装
 
 当前提供测试版，请按系统选择：
@@ -31,9 +43,7 @@
 | macOS · Apple Silicon（M 系列） | [下载 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0/ZZZ-Idol-Desktop-Pet_0.1.0_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
 | Windows · x64 | [下载 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0-windows.1/ZZZ.Idol.Desktop.Pet_0.1.0_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0-windows.1) |
 
-macOS 暂无 Intel 安装包，现有包尚未通过 Apple 公证；首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0)。Windows EXE 已完成安装与番茄钟手动验收，MSI 尚未单独验收。
-
-[查看全部版本与更新说明 →](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases) · 仓库为私有时，下载需要登录有访问权限的 GitHub 账号。
+macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0)。
 
 ## 使用指南
 
