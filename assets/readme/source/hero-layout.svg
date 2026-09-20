@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title description">
+  <title id="title">妄想天使桌宠 — 爱芮、南宫、千夏</title>
+  <desc id="description">从项目真实 Spine 角色渲染得到的三人展示，采用应用原生的粉色与暖棕配色。</desc>
+  <rect width="1200" height="680" rx="28" fill="#3b2630"/>
+  <g id="heading" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif">
+    <text x="600" y="62" font-size="22" font-weight="600" letter-spacing="5" fill="#e995b6">ZZZ IDOL DESKTOP PET</text>
+    <text x="600" y="144" font-size="62" font-weight="800" fill="#fff0f5">妄想天使桌宠</text>
+  </g>
+  <g id="character-stage">
+    <path d="M90 594 H1110" stroke="#6a4655" stroke-width="2"/>
+    <image href="characters.png" x="0" y="100" width="1200" height="560"/>
+  </g>
+  <g id="character-names" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="32" font-weight="600" fill="#ffd1e3">
+    <text x="242" y="640">爱芮</text>
+    <text x="600" y="640">南宫</text>
+    <text x="1030" y="640">千夏</text>
+  </g>
+</svg>
