@@ -40,10 +40,10 @@
 
 | 系统 | 下载 | 安装方式 |
 | :--- | :--- | :--- |
-| macOS · Apple Silicon（M 系列） | [下载 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0/ZZZ-Idol-Desktop-Pet_0.1.0_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
+| macOS · Apple Silicon（M 系列） | [下载 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0-windows.1/ZZZ-Idol-Desktop-Pet_0.1.0_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
 | Windows · x64 | [下载 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0-windows.1/ZZZ.Idol.Desktop.Pet_0.1.0_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0-windows.1) |
 
-macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0)。
+macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0-windows.1)。
 
 ## 使用指南
 
