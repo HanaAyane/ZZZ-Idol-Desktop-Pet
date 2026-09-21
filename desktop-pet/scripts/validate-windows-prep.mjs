@@ -7,8 +7,9 @@ const repositoryRoot = path.resolve(desktopPetRoot, "..");
 const read = (file) => readFile(path.join(repositoryRoot, file), "utf8");
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
-const [workflow, issueForm, packageJson] = await Promise.all([
+const [workflow, checklist, issueForm, packageJson] = await Promise.all([
   read(".github/workflows/windows-build.yml"),
+  read("WINDOWS-TESTING.md"),
   read(".github/ISSUE_TEMPLATE/windows-bug.yml"),
   read("desktop-pet/package.json"),
 ]);
@@ -24,8 +25,11 @@ assert(workflow.includes('0.1.${{ github.run_number }}'), "Windows 测试包没�
 assert(workflow.includes("SHA256SUMS.txt") && workflow.includes("BUILD-INFO.txt"), "Artifact 缺少校验值或构建身份");
 assert(workflow.includes("actions/upload-artifact@v4"), "Windows 安装包没有上传为 Actions Artifact");
 
+for (const section of ["首次启动", "透明窗口", "拖拽", "自动漫步", "DPI", "设置、托盘", "性能", "安装、升级与卸载", "Bug 回报模板"]) {
+  assert(checklist.includes(section), `Windows 测试清单缺少：${section}`);
+}
 for (const field of ["Commit / 测试版本", "Windows 版本与架构", "显示器与缩放", "复现步骤", "预期结果", "实际结果", "发生频率"]) {
   assert(issueForm.includes(field), `Windows Bug 表单缺少：${field}`);
 }
 
-console.log("Windows 阶段 8 准备校验通过：x64 NSIS/MSI 构建、唯一测试版本、Artifact 身份校验和 Bug 表单均已就绪。");
+console.log("Windows 阶段 8 准备校验通过：x64 NSIS/MSI 构建、唯一测试版本、Artifact 身份校验、实机矩阵和 Bug 表单均已就绪。");

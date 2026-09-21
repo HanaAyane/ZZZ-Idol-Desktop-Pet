@@ -84,7 +84,7 @@ npm run tauri -- build --bundles app -- --locked
 
 产物位于 `desktop-pet/src-tauri/target/release/bundle/macos/`。Windows x64 的 NSIS / MSI 由 [GitHub Actions](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/actions/workflows/windows-build.yml) 构建。
 
-[完整功能与开发说明](desktop-pet/README.md)
+[完整功能与开发说明](desktop-pet/README.md) · [Windows 实机验收清单](WINDOWS-TESTING.md)
 
 </details>
 
