@@ -78,7 +78,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 托举渲染核验：运行 `npm run dev`，打开 `http://localhost:1420/tests/fixtures/window-lift.html`，可同时检查三个真实托举骨骼在 60% / 100% 大小时的手掌贴边效果。该页面不进入发布构建，也不替代原生窗口拖动、跨屏和权限验收。
 
-Windows x64 的 GitHub Actions 构建会生成 NSIS `.exe` 与 MSI `.msi`，并将构建身份、SHA-256 和实机清单一起上传为 Artifact。Windows 11 测试步骤见仓库根目录的 [`WINDOWS-TESTING.md`](../WINDOWS-TESTING.md)。CI Runner 只验证 Windows 工具链构建，透明窗口、DPI、拖拽和逐像素穿透仍以 Windows 11 实机清单为准。
+Windows x64 的 GitHub Actions 构建会生成 NSIS `.exe` 与 MSI `.msi`，并将构建身份和 SHA-256 一起上传为 Artifact。CI Runner 只验证 Windows 工具链构建，透明窗口、DPI、拖拽和逐像素穿透仍需在 Windows 11 实机上验证。
 
 macOS 应用包输出到：
 
