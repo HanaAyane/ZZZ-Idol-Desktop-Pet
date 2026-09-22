@@ -644,6 +644,51 @@ body[data-window="settings"] {
   color: #78eba8;
 }
 
+.author-name {
+  margin: 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffe7f0;
+}
+
+.author-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.author-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 170, 205, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 170, 205, 0.07);
+  color: #ffd0e2;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.author-links a:hover {
+  background: rgba(255, 170, 205, 0.16);
+  border-color: #e9a3be;
+}
+
+.author-links a:focus-visible {
+  outline: 2px solid #ffc0d8;
+  outline-offset: 3px;
+}
+
+.author-link-error:not([hidden]) {
+  display: block;
+  margin-top: 12px;
+  color: #ffd0e2;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .settings-footer {
   display: flex;
   justify-content: space-between;

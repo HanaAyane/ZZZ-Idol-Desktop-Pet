@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "author-links",
+  "description": "Allow settings to open the author's Bilibili and GitHub profiles.",
+  "windows": ["settings"],
+  "permissions": [
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://space.bilibili.com/13745360" },
+        { "url": "https://github.com/HanaAyane" }
+      ]
+    }
+  ]
+}

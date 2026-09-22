@@ -1,5 +1,6 @@
 import { getState as getPomodoroState, setVisible as setPomodoroVisible, subscribe as subscribePomodoro } from "../pomodoro/client";
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { CHARACTERS } from "../characters";
 import { APP_SETTINGS_STATE, COORDINATION_STATE, listenAppEvent } from "../characters/events";
 import type { CharacterId } from "../characters/types";
@@ -135,6 +136,16 @@ export class SettingsApp {
           <output class="diagnostics-path" data-diagnostics-path hidden></output>
         </section>
 
+        <section class="settings-section" aria-labelledby="author-title">
+          <div class="section-heading"><div><p class="eyebrow">AUTHOR</p><h2 id="author-title">作者信息</h2></div></div>
+          <p class="author-name">HanaAyane</p>
+          <nav class="author-links" aria-label="作者主页">
+            <a href="https://space.bilibili.com/13745360" target="_blank" rel="noopener noreferrer">B 站主页 <span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/HanaAyane" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          </nav>
+          <output class="author-link-error" data-author-link-error role="status" aria-live="polite" hidden></output>
+        </section>
+
         <footer class="settings-footer">
           <span data-save-status>配置由应用统一保存</span>
           <span>关闭后释放设置页资源，不会退出桌宠</span>
@@ -168,6 +179,20 @@ export class SettingsApp {
   }
 
   private bindControls(): void {
+    this.root.querySelectorAll<HTMLAnchorElement>(".author-links a").forEach((link) => {
+      link.addEventListener("click", async (event) => {
+        if (!window.__TAURI_INTERNALS__) return;
+        event.preventDefault();
+        const status = this.root.querySelector<HTMLOutputElement>("[data-author-link-error]")!;
+        status.hidden = true;
+        try {
+          await openUrl(link.href);
+        } catch {
+          status.textContent = `无法打开浏览器，请复制链接访问：${link.href}`;
+          status.hidden = false;
+        }
+      });
+    });
     this.root.querySelector<HTMLInputElement>("[data-pomodoro-visible]")!.addEventListener("change", async event => {
       const input = event.target as HTMLInputElement;
       input.disabled = true;

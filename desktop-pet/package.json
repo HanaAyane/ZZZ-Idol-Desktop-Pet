@@ -26,6 +26,7 @@
     "@esotericsoftware/spine-threejs": "4.2.42",
     "@tauri-apps/api": "2.11.1",
     "@tauri-apps/plugin-log": "2.9.0",
+    "@tauri-apps/plugin-opener": "^2.5.5",
     "three": "0.155.0"
   },
   "devDependencies": {

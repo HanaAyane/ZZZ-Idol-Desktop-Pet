@@ -1211,6 +1211,7 @@ pub fn run() {
         .manage(CoordinationManager::default())
         .manage(LastActivePet(Mutex::new(None)))
         .manage(WindowLiftManager::default())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             log::info!(
                 target: "desktop_pet::lifecycle",
