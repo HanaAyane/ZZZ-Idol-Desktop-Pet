@@ -1,6 +1,6 @@
 [package]
 name = "desktop-pet"
-version = "0.1.0"
+version = "0.1.1"
 description = "Cross-platform desktop pet for Airui, Nangong, and Qianxia"
 authors = ["Hana"]
 edition = "2021"

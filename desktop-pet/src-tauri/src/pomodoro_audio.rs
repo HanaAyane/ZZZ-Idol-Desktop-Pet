@@ -1,10 +1,10 @@
 //! One application-owned audio worker. Embedded original MP3s also work in installed bundles.
+use rodio::Source;
 use std::{
     io::Cursor,
     sync::{mpsc, Arc, Mutex},
     time::Duration,
 };
-use rodio::Source;
 
 pub enum AudioCommand {
     Play(&'static str, f32),
@@ -18,6 +18,8 @@ pub struct AudioService {
 }
 fn bytes(sound: &str) -> &'static [u8] {
     match sound {
+        // A short neutral cue, separate from the break/resume event semantics.
+        "reminder" => include_bytes!("../../resources/pomodoro/start.mp3"),
         "break" => include_bytes!("../../resources/pomodoro/break.mp3"),
         "resume" => include_bytes!("../../resources/pomodoro/resume.mp3"),
         "complete" => include_bytes!("../../resources/pomodoro/complete.mp3"),
@@ -31,8 +33,8 @@ const START_NOTE_SPLIT_MS: usize = 435;
 const START_NOTE_END_MS: usize = 700;
 
 fn swapped_start_notes() -> Result<rodio::buffer::SamplesBuffer, String> {
-    let decoder = rodio::Decoder::try_from(Cursor::new(bytes("start")))
-        .map_err(|e| e.to_string())?;
+    let decoder =
+        rodio::Decoder::try_from(Cursor::new(bytes("start"))).map_err(|e| e.to_string())?;
     let channels = decoder.channels();
     let sample_rate = decoder.sample_rate();
     let samples: Vec<f32> = decoder.collect();
@@ -62,7 +64,11 @@ fn swapped_start_notes() -> Result<rodio::buffer::SamplesBuffer, String> {
     }
     // Keep the original duration, replacing the discarded low-level tail with silence.
     swapped.resize(samples.len(), 0.0);
-    Ok(rodio::buffer::SamplesBuffer::new(channels, sample_rate, swapped))
+    Ok(rodio::buffer::SamplesBuffer::new(
+        channels,
+        sample_rate,
+        swapped,
+    ))
 }
 impl AudioService {
     pub fn new() -> Self {

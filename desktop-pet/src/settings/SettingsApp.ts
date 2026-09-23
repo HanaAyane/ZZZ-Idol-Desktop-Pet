@@ -77,7 +77,7 @@ export class SettingsApp {
 
         <section class="settings-section" aria-labelledby="pomodoro-title">
           <div class="section-heading"><div><p class="eyebrow">POMODORO</p><h2 id="pomodoro-title">番茄钟</h2></div></div>
-          <div class="setting-list"><label class="setting-row"><span><strong>显示番茄钟</strong><small>在桌面置顶窗口中设置轮数、专注和休息；关闭窗口后继续计时</small></span><input class="toggle" type="checkbox" data-pomodoro-visible></label></div>
+          <div class="setting-list"><label class="setting-row"><span><strong>显示番茄钟</strong><small>支持番茄钟与自定义计时，可设置多个提醒时间点；关闭窗口后继续计时</small></span><input class="toggle" type="checkbox" data-pomodoro-visible></label></div>
           <output data-pomodoro-error role="status"></output>
         </section>
 

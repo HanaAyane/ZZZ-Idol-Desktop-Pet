@@ -20,7 +20,7 @@
 - **自然互动** — 点击、双击、拖拽都有反馈，视线跟随鼠标，支持集合与散开。
 - **自由漫步** — 横向、斜向六个方向移动，频率和速度随你调整。
 - **窗口托举** — 将角色拖到普通窗口底边，让她们贴边托举；也可开启漫步时自动托举。
-- **专注陪伴** — 独立番茄钟支持暂停、继续与铃声设置，关闭计时窗口后仍在后台计时。
+- **专注陪伴** — 番茄钟与自定义计时两种模式，支持不等间隔提醒、暂停与继续，关闭窗口后仍在后台计时。
 
 ## 实际效果
 
@@ -36,14 +36,14 @@
 
 ## 下载安装
 
-首个正式版 **v0.1.0**，请按系统选择：
+macOS 最新版 **v0.1.1** 新增自定义计时与多时间点提醒。[查看更新说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1)。Windows v0.1.1 安装包将稍后补充，当前可下载 v0.1.0。
 
 | 系统 | 下载 | 安装方式 |
 | :--- | :--- | :--- |
-| macOS · Apple Silicon（M 系列） | [下载 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0-windows.1/ZZZ-Idol-Desktop-Pet_0.1.0_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
+| macOS · Apple Silicon（M 系列） | [下载 v0.1.1 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.1/ZZZ-Idol-Desktop-Pet_0.1.1_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
 | Windows · x64 | [下载 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.0-windows.1/ZZZ.Idol.Desktop.Pet_0.1.0_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0-windows.1) |
 
-macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.0-windows.1)。
+macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1)。
 
 ## 使用指南
 
@@ -51,6 +51,7 @@ macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [ma
 2. **右键角色或打开系统托盘菜单**，进入设置，调整显示、大小、置顶和互动选项。
 3. **按喜好开启漫步与托举**；开启「手动窗口托举」后，将角色拖到普通窗口底边附近松手，拖离或按 `Esc` 可放下。
 4. **打开番茄钟**，从设置或菜单进入。默认每组 2 轮，专注 25 分钟、休息 5 分钟，开始前可自行调整。
+5. **需要按自己的节奏提醒时**，切换到「自定义计时」，设置总时长和多个提醒点。例如计时 120 分钟，在第 25、45、90 分钟分别提醒。
 
 设置快捷键：macOS `⌘ ,` / Windows `Ctrl + ,`。番茄钟关闭窗口后继续计时；退出并重启应用后，进度恢复为暂停，点击继续即可。
 

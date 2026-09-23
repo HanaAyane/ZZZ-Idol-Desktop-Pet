@@ -8,9 +8,39 @@ use std::{
 };
 use tauri::{Emitter, Manager, WebviewWindow};
 
+const MAX_CUSTOM_MINUTES: u32 = 720;
+const MAX_REMINDERS: usize = 64;
+
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum TimerMode {
+    #[default]
+    Pomodoro,
+    Custom,
+}
+
+fn validate_reminders(total: u32, reminders: &[u32]) -> Result<(), String> {
+    if !(1..=MAX_CUSTOM_MINUTES).contains(&total) {
+        return Err("总时长须为 1～720 分钟。".into());
+    }
+    if reminders.len() > MAX_REMINDERS {
+        return Err("最多设置 64 个提醒时间点。".into());
+    }
+    if reminders.iter().any(|&m| m == 0 || m >= total) {
+        return Err("提醒须为大于 0 且小于总时长的整数分钟；结束时会自动提醒。".into());
+    }
+    if reminders.windows(2).any(|w| w[0] >= w[1]) {
+        return Err("提醒时间点不可重复，且须按时间排序。".into());
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Preferences {
+    pub mode: TimerMode,
+    pub custom_minutes: u32,
+    pub reminder_minutes: Vec<u32>,
     pub focus_minutes: u32,
     pub break_minutes: u32,
     pub default_rounds: u32,
@@ -20,6 +50,9 @@ pub struct Preferences {
 impl Default for Preferences {
     fn default() -> Self {
         Self {
+            mode: TimerMode::Pomodoro,
+            custom_minutes: 120,
+            reminder_minutes: vec![25, 45],
             focus_minutes: 25,
             break_minutes: 5,
             default_rounds: 2,
@@ -30,6 +63,7 @@ impl Default for Preferences {
 }
 impl Preferences {
     pub fn validate(&self) -> Result<(), String> {
+        validate_reminders(self.custom_minutes, &self.reminder_minutes)?;
         if !(1..=180).contains(&self.focus_minutes)
             || !(1..=60).contains(&self.break_minutes)
             || !(1..=99).contains(&self.default_rounds)
@@ -45,6 +79,9 @@ impl Preferences {
 #[serde(rename_all = "camelCase", default)]
 pub struct Snapshot {
     pub version: u32,
+    pub mode: TimerMode,
+    pub reminder_minutes: Vec<u32>,
+    pub next_reminder_index: usize,
     pub session_id: String,
     pub revision: u64,
     pub phase: String,
@@ -66,7 +103,10 @@ pub struct Snapshot {
 impl Default for Snapshot {
     fn default() -> Self {
         Self {
-            version: 1,
+            version: 2,
+            mode: TimerMode::Pomodoro,
+            reminder_minutes: Vec::new(),
+            next_reminder_index: 0,
             session_id: String::new(),
             revision: 0,
             phase: "idle".into(),
@@ -89,23 +129,54 @@ impl Default for Snapshot {
 }
 impl Snapshot {
     fn active(&self) -> bool {
-        self.phase == "focus" || self.phase == "break"
+        matches!(self.phase.as_str(), "focus" | "break" | "custom")
     }
     fn restore(mut self) -> Result<Self, String> {
+        // v1 has no custom timer fields. Preserve its Pomodoro progress.
+        if self.version == 1 {
+            self.mode = TimerMode::Pomodoro;
+            self.reminder_minutes.clear();
+            self.next_reminder_index = 0;
+            self.version = 2;
+        }
         self.preferences.validate()?;
-        if self.version != 1
+        if self.version != 2
             || !matches!(
                 self.phase.as_str(),
-                "idle" | "focus" | "break" | "completed" | "stopped"
+                "idle" | "focus" | "break" | "custom" | "completed" | "stopped"
             )
             || !(1..=99).contains(&self.total_rounds)
             || self.completed_rounds > self.total_rounds
             || !(60_000..=10_800_000).contains(&self.focus_ms)
             || !(60_000..=3_600_000).contains(&self.break_ms)
             || self.remaining_ms > self.duration_ms
-            || self.duration_ms > 10_800_000
+            || self.duration_ms > MAX_CUSTOM_MINUTES as u64 * 60_000
             || (self.active()
                 && (self.session_id.is_empty() || self.completed_rounds >= self.total_rounds))
+        {
+            return Err("番茄钟进度格式无效".into());
+        }
+        if self.mode == TimerMode::Custom {
+            if self.duration_ms % 60_000 != 0
+                || matches!(self.phase.as_str(), "focus" | "break")
+                || self.next_reminder_index > self.reminder_minutes.len()
+            {
+                return Err("自定义计时进度格式无效".into());
+            }
+            validate_reminders((self.duration_ms / 60_000) as u32, &self.reminder_minutes)?;
+            let elapsed_ms = self.duration_ms - self.remaining_ms;
+            let due_count = self
+                .reminder_minutes
+                .iter()
+                .take_while(|&&m| m as u64 * 60_000 <= elapsed_ms)
+                .count();
+            if self.next_reminder_index != due_count {
+                return Err("自定义计时提醒进度无效".into());
+            }
+        } else if self.phase == "custom"
+            || self.duration_ms > 10_800_000
+            || !self.reminder_minutes.is_empty()
+            || self.next_reminder_index != 0
         {
             return Err("番茄钟进度格式无效".into());
         }
@@ -149,6 +220,39 @@ impl ClockState {
         let precise = elapsed + self.carry;
         let elapsed_ms = precise.as_millis().min(u64::MAX as u128) as u64;
         self.carry = precise - Duration::from_millis(elapsed_ms);
+        if s.mode == TimerMode::Custom {
+            s.remaining_ms = s.remaining_ms.saturating_sub(elapsed_ms);
+            let used_ms = s.duration_ms - s.remaining_ms;
+            let previous_index = s.next_reminder_index;
+            while s
+                .reminder_minutes
+                .get(s.next_reminder_index)
+                .is_some_and(|&m| m as u64 * 60_000 <= used_ms)
+            {
+                s.next_reminder_index += 1;
+            }
+            if s.remaining_ms == 0 {
+                s.phase = "completed".into();
+                s.notice = "计时结束，辛苦了！".into();
+                return Some("complete");
+            }
+            if s.next_reminder_index != previous_index {
+                // Crossing a boundary triggers once, even when a tick is slightly late.
+                s.notice = format!(
+                    "已用 {} 分钟，剩余 {} 分钟。",
+                    used_ms / 60_000,
+                    s.remaining_ms.div_ceil(60_000)
+                );
+                return Some("reminder");
+            }
+            if s.next_reminder_index > 0
+                && used_ms - s.reminder_minutes[s.next_reminder_index - 1] as u64 * 60_000 >= 10_000
+                && s.notice.starts_with("已用 ")
+            {
+                s.notice.clear();
+            }
+            return None;
+        }
         if elapsed_ms < s.remaining_ms {
             s.remaining_ms -= elapsed_ms;
             return None;
@@ -192,9 +296,7 @@ impl ClockState {
         preferences: Option<Preferences>,
     ) -> Result<Option<&'static str>, String> {
         let s = &mut self.snapshot;
-        if !matches!(action, "start" | "preferences")
-            && session != Some(s.session_id.as_str())
-        {
+        if !matches!(action, "start" | "preferences") && session != Some(s.session_id.as_str()) {
             return Err("计时已更新，请重新操作。".into());
         }
         match action {
@@ -202,7 +304,8 @@ impl ClockState {
                 if s.active() {
                     return Err("当前已有计时，请先结束本组。".into());
                 }
-                let p = preferences.ok_or("缺少计时参数")?;
+                let mut p = preferences.ok_or("缺少计时参数")?;
+                p.reminder_minutes.sort_unstable();
                 p.validate()?;
                 s.preferences = p.clone();
                 s.session_id = format!(
@@ -215,24 +318,64 @@ impl ClockState {
                 );
                 s.focus_ms = p.focus_minutes as u64 * 60_000;
                 s.break_ms = p.break_minutes as u64 * 60_000;
-                s.duration_ms = s.focus_ms;
-                s.remaining_ms = s.focus_ms;
+                s.mode = p.mode;
+                s.reminder_minutes = if p.mode == TimerMode::Custom {
+                    p.reminder_minutes.clone()
+                } else {
+                    Vec::new()
+                };
+                s.next_reminder_index = 0;
+                s.duration_ms = if p.mode == TimerMode::Custom {
+                    p.custom_minutes as u64 * 60_000
+                } else {
+                    s.focus_ms
+                };
+                s.remaining_ms = s.duration_ms;
                 s.total_rounds = p.default_rounds;
                 s.completed_rounds = 0;
-                s.phase = "focus".into();
+                s.phase = if p.mode == TimerMode::Custom {
+                    "custom"
+                } else {
+                    "focus"
+                }
+                .into();
                 s.paused = false;
                 s.notice.clear();
+                self.carry = Duration::ZERO;
                 Ok(Some("start"))
             }
             "preferences" => {
-                let p = preferences.ok_or("缺少设置")?;
+                let mut p = preferences.ok_or("缺少设置")?;
+                p.reminder_minutes.sort_unstable();
                 p.validate()?;
-                if s.active()
-                    && (p.focus_minutes != s.preferences.focus_minutes
-                        || p.break_minutes != s.preferences.break_minutes
-                        || p.default_rounds != s.preferences.default_rounds)
-                {
+                let timing_changed = p.focus_minutes != s.preferences.focus_minutes
+                    || p.break_minutes != s.preferences.break_minutes
+                    || p.default_rounds != s.preferences.default_rounds
+                    || p.mode != s.preferences.mode
+                    || p.custom_minutes != s.preferences.custom_minutes
+                    || p.reminder_minutes != s.preferences.reminder_minutes;
+                if s.active() && timing_changed {
                     return Err("计时中只能修改声音设置。".into());
+                }
+                if timing_changed {
+                    s.phase = "idle".into();
+                    s.paused = false;
+                    s.mode = p.mode;
+                    s.reminder_minutes = if p.mode == TimerMode::Custom {
+                        p.reminder_minutes.clone()
+                    } else {
+                        Vec::new()
+                    };
+                    s.next_reminder_index = 0;
+                    s.duration_ms = if p.mode == TimerMode::Custom {
+                        p.custom_minutes as u64 * 60_000
+                    } else {
+                        p.focus_minutes as u64 * 60_000
+                    };
+                    s.remaining_ms = s.duration_ms;
+                    s.completed_rounds = 0;
+                    s.total_rounds = p.default_rounds;
+                    s.notice.clear();
                 }
                 s.preferences = p;
                 Ok(None)
@@ -248,7 +391,7 @@ impl ClockState {
                 s.notice.clear();
                 Ok(None)
             }
-            "add" if s.active() && s.total_rounds < 99 => {
+            "add" if s.active() && s.mode == TimerMode::Pomodoro && s.total_rounds < 99 => {
                 s.total_rounds += 1;
                 Ok(None)
             }
@@ -357,8 +500,9 @@ impl PomodoroManager {
         let result = state.action(action, session, preferences);
         // A rejected stale command must not erase a natural completion.
         let sound = match &result {
-            Ok(Some(sound)) => Some(*sound),
-            _ => transition,
+            Ok(Some(sound @ ("stop" | "start"))) => Some(*sound),
+            Ok(sound) => transition.or(*sound),
+            Err(_) => transition,
         };
         state.snapshot.revision += 1;
         self.sound(&state.snapshot, sound);
@@ -495,7 +639,10 @@ fn create_or_show_window(app: &tauri::AppHandle) -> Result<(), String> {
     let manager = app.state::<PomodoroManager>();
     // Serialize creation without holding the timer state lock: the new WebView
     // and its window events can read that state while building.
-    let _creation = manager.window_creation.lock().map_err(|_| "番茄钟窗口创建锁不可用")?;
+    let _creation = manager
+        .window_creation
+        .lock()
+        .map_err(|_| "番茄钟窗口创建锁不可用")?;
     if let Some(w) = app.get_webview_window("pomodoro") {
         w.show().map_err(|e| e.to_string())?;
         w.set_focus().map_err(|e| e.to_string())?;
@@ -682,5 +829,203 @@ mod tests {
         }
         .validate()
         .is_err());
+    }
+    fn custom_started(total: u32, reminders: Vec<u32>) -> ClockState {
+        let mut s = ClockState::new(Snapshot::default());
+        s.action(
+            "start",
+            None,
+            Some(Preferences {
+                mode: TimerMode::Custom,
+                custom_minutes: total,
+                reminder_minutes: reminders,
+                ..Default::default()
+            }),
+        )
+        .unwrap();
+        s
+    }
+    #[test]
+    fn custom_crosses_unequal_reminders_once_without_interrupting_countdown() {
+        let mut s = custom_started(120, vec![45, 25]);
+        assert_eq!(s.snapshot.reminder_minutes, vec![25, 45]);
+        assert_eq!(s.advance(Duration::from_millis(1_499_900), false), None);
+        assert_eq!(
+            s.advance(Duration::from_millis(300), false),
+            Some("reminder")
+        );
+        assert_eq!(s.snapshot.next_reminder_index, 1);
+        assert_eq!(s.snapshot.phase, "custom");
+        assert!(!s.snapshot.paused);
+        assert_eq!(s.snapshot.remaining_ms, 5_699_800);
+        assert_eq!(s.advance(Duration::from_millis(250), false), None);
+        assert_eq!(
+            s.advance(Duration::from_millis(1_199_550), false),
+            Some("reminder")
+        );
+        assert_eq!(s.snapshot.next_reminder_index, 2);
+        assert_eq!(s.snapshot.remaining_ms, 75 * 60_000);
+        assert_eq!(s.advance(Duration::from_secs(1), false), None);
+    }
+    #[test]
+    fn custom_pause_resume_shifts_reminders_by_the_pause_duration() {
+        let mut s = custom_started(120, vec![25, 45]);
+        s.advance(Duration::from_secs(24 * 60), false);
+        command(&mut s, "pause");
+        let remaining = s.snapshot.remaining_ms;
+        assert_eq!(s.advance(Duration::from_secs(30 * 60), false), None);
+        assert_eq!(s.snapshot.remaining_ms, remaining);
+        assert_eq!(s.snapshot.next_reminder_index, 0);
+        command(&mut s, "resume");
+        assert_eq!(s.advance(Duration::from_secs(59), false), None);
+        assert_eq!(s.advance(Duration::from_secs(1), false), Some("reminder"));
+    }
+    #[test]
+    fn custom_restores_paused_without_replaying_fired_reminders() {
+        let mut s = custom_started(120, vec![25, 45]);
+        s.advance(Duration::from_secs(25 * 60), false);
+        let json = serde_json::to_string(&s.snapshot).unwrap();
+        let restored = serde_json::from_str::<Snapshot>(&json)
+            .unwrap()
+            .restore()
+            .unwrap();
+        let mut s = ClockState::new(restored);
+        assert!(s.snapshot.paused);
+        assert_eq!(s.snapshot.next_reminder_index, 1);
+        assert_eq!(s.advance(Duration::from_secs(99_999), false), None);
+        command(&mut s, "resume");
+        assert_eq!(s.advance(Duration::from_secs(1), false), None);
+        assert_eq!(
+            s.advance(Duration::from_secs(20 * 60 - 1), false),
+            Some("reminder")
+        );
+        assert_eq!(s.snapshot.next_reminder_index, 2);
+    }
+    #[test]
+    fn custom_sleep_does_not_consume_or_replay_reminders() {
+        let mut s = custom_started(120, vec![25, 45]);
+        s.advance(Duration::from_secs(24 * 60), false);
+        let remaining = s.snapshot.remaining_ms;
+        assert_eq!(s.advance(Duration::from_secs(3600), true), Some("stop"));
+        assert!(s.snapshot.paused);
+        assert_eq!(s.snapshot.remaining_ms, remaining);
+        assert_eq!(s.snapshot.next_reminder_index, 0);
+        command(&mut s, "resume");
+        assert_eq!(s.advance(Duration::from_secs(60), false), Some("reminder"));
+    }
+    #[test]
+    fn custom_completion_is_single_and_no_reminders_is_valid() {
+        for reminders in [vec![], vec![1, 3]] {
+            let mut s = custom_started(4, reminders);
+            assert_eq!(s.advance(Duration::from_secs(240), false), Some("complete"));
+            assert_eq!(s.snapshot.phase, "completed");
+            assert_eq!(s.snapshot.remaining_ms, 0);
+            assert_eq!(
+                s.snapshot.next_reminder_index,
+                s.snapshot.reminder_minutes.len()
+            );
+            assert_eq!(s.advance(Duration::from_secs(1), false), None);
+            assert!(s.snapshot.clone().restore().is_ok());
+        }
+    }
+    #[test]
+    fn custom_settings_are_frozen_until_stopped_but_sound_can_change() {
+        let mut s = custom_started(120, vec![25, 45]);
+        command(&mut s, "pause");
+        let id = s.snapshot.session_id.clone();
+        let original = s.snapshot.preferences.clone();
+        for changed in [
+            Preferences {
+                custom_minutes: 121,
+                ..original.clone()
+            },
+            Preferences {
+                reminder_minutes: vec![30],
+                ..original.clone()
+            },
+            Preferences {
+                mode: TimerMode::Pomodoro,
+                ..original.clone()
+            },
+        ] {
+            assert!(s.action("preferences", Some(&id), Some(changed)).is_err());
+        }
+        assert!(s.action("add", Some(&id), None).is_err());
+        assert!(s.action("skip", Some(&id), None).is_err());
+        assert!(s.action("start", None, Some(original.clone())).is_err());
+        let quiet = Preferences {
+            sound_enabled: false,
+            volume: 20,
+            ..original.clone()
+        };
+        s.action("preferences", Some(&id), Some(quiet)).unwrap();
+        assert_eq!(s.snapshot.remaining_ms, 120 * 60_000);
+        command(&mut s, "stop");
+        assert_eq!(s.advance(Duration::from_secs(3600), false), None);
+        s.action("start", None, Some(original)).unwrap();
+        assert_eq!(s.snapshot.next_reminder_index, 0);
+        assert_ne!(s.snapshot.session_id, id);
+        assert!(s.action("pause", Some(&id), None).is_err());
+    }
+    #[test]
+    fn custom_rejects_duplicate_out_of_range_and_invalid_saved_cursor() {
+        for reminders in [vec![0], vec![120], vec![121], vec![25, 25]] {
+            let mut s = ClockState::new(Snapshot::default());
+            assert!(s
+                .action(
+                    "start",
+                    None,
+                    Some(Preferences {
+                        mode: TimerMode::Custom,
+                        reminder_minutes: reminders,
+                        ..Default::default()
+                    })
+                )
+                .is_err());
+        }
+        let mut s = custom_started(720, vec![719]);
+        assert!(s.snapshot.clone().restore().is_ok());
+        s.snapshot.next_reminder_index = 1;
+        assert!(s.snapshot.restore().is_err());
+        assert!(validate_reminders(721, &[]).is_err());
+        assert!(validate_reminders(720, &(1..=65).collect::<Vec<_>>()).is_err());
+    }
+    #[test]
+    fn legacy_v1_json_preserves_pomodoro_progress_and_defaults_to_old_mode() {
+        let mut old = serde_json::to_value(started(2).snapshot).unwrap();
+        old["version"] = 1.into();
+        old["remainingMs"] = 123_456.into();
+        for field in ["mode", "reminderMinutes", "nextReminderIndex"] {
+            old.as_object_mut().unwrap().remove(field);
+        }
+        for field in ["mode", "customMinutes", "reminderMinutes"] {
+            old["preferences"].as_object_mut().unwrap().remove(field);
+        }
+        let s = serde_json::from_value::<Snapshot>(old)
+            .unwrap()
+            .restore()
+            .unwrap();
+        assert_eq!(s.version, 2);
+        assert_eq!(s.mode, TimerMode::Pomodoro);
+        assert_eq!(s.preferences.mode, TimerMode::Pomodoro);
+        assert_eq!(s.remaining_ms, 123_456);
+        assert!(s.paused);
+        assert_eq!(s.total_rounds, 2);
+        assert!(s.reminder_minutes.is_empty());
+    }
+    #[test]
+    fn custom_notice_expires_and_mode_change_returns_to_ready() {
+        let mut s = custom_started(120, vec![25]);
+        s.advance(Duration::from_secs(25 * 60), false);
+        assert!(s.snapshot.notice.starts_with("已用 "));
+        s.advance(Duration::from_secs(10), false);
+        assert!(s.snapshot.notice.is_empty());
+        command(&mut s, "stop");
+        s.action("preferences", None, Some(Preferences::default()))
+            .unwrap();
+        assert_eq!(s.snapshot.phase, "idle");
+        assert_eq!(s.snapshot.mode, TimerMode::Pomodoro);
+        assert_eq!(s.snapshot.remaining_ms, 25 * 60_000);
+        assert!(s.snapshot.restore().is_ok());
     }
 }

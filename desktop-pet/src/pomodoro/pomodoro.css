@@ -3,7 +3,7 @@ html[data-window="pomodoro"], body[data-window="pomodoro"] { overflow: hidden; b
 .pomodoro-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .pomodoro-drag { position: absolute; left: 16%; top: 1%; width: 55%; height: 12%; cursor: grab; }
 .pomodoro-drag:active { cursor: grabbing; }
-.pomodoro-screen { position: absolute; left: 12%; top: 14%; width: 61%; height: 56%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cb78a1 transparent; display: flex; flex-direction: column; gap: 7px; }
+.pomodoro-screen { position: absolute; left: 12%; top: 14%; width: 61%; height: 56%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cb78a1 transparent; display: flex; flex-direction: column; gap: 5px; }
 .pomodoro-header { display: flex; justify-content: space-between; align-items: center; letter-spacing: 1.5px; font-size: 9px; color: #f3a9ca; }
 .pomodoro-shell button { border: 1px solid #cb78a1; background: #74324f; color: #ffe3ef; border-radius: 8px; padding: 6px 9px; font: inherit; font-size: 11px; cursor: pointer; transition: background .15s; white-space: nowrap; }
 .pomodoro-shell button:hover { background: #944567; }
@@ -11,7 +11,7 @@ html[data-window="pomodoro"], body[data-window="pomodoro"] { overflow: hidden; b
 .pomodoro-shell button:focus-visible, .pomodoro-shell input:focus-visible { outline: 2px solid #ffd0e5; outline-offset: 2px; }
 .pomodoro-shell button:disabled { opacity: .5; cursor: default; }
 .pomodoro-phase { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #ffc5df; }
-.pomodoro-time { font-size: 51px; line-height: 1.2; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; text-align: center; color: #ffd0e5; text-shadow: 0 2px 15px #ed79b225; }
+.pomodoro-time { font-size: 44px; line-height: 1.2; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; text-align: center; color: #ffd0e5; text-shadow: 0 2px 15px #ed79b225; }
 .pomodoro-shell progress { appearance: none; display: block; width: 100%; height: 5px; border: none; border-radius: 5px; overflow: hidden; background: #523e60; margin: 5px 0 10px; }
 .pomodoro-shell progress::-webkit-progress-bar { background: #523e60; }
 .pomodoro-shell progress::-webkit-progress-value { background: #f58abc; border-radius: 5px; }
@@ -19,7 +19,7 @@ html[data-window="pomodoro"], body[data-window="pomodoro"] { overflow: hidden; b
 .pomodoro-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pomodoro-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #f7b7d2; }
 .pomodoro-inputs input { width: 100%; min-width: 0; height: 29px; background: #392d4c; border: 1px solid #95627f; border-radius: 6px; color: #ffd0e5; text-align: center; font: inherit; font-size: 14px; }
-.pomodoro-summary { margin: 8px 0; font-size: 10px; text-align: center; color: #f7b7d2; }
+.pomodoro-summary { margin: 7px 0; font-size: 10px; line-height: 1.5; text-align: center; color: #f7b7d2; white-space: pre-line; max-height: 45px; overflow-y: auto; }
 .pomodoro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .pomodoro-shell .pomodoro-primary { background: #a24671; font-weight: 700; flex: 1; }
 .pomodoro-confirm { display: flex; gap: 5px; align-items: center; font-size: 11px; }
@@ -32,3 +32,17 @@ html[data-window="pomodoro"], body[data-window="pomodoro"] { overflow: hidden; b
 .pomodoro-volume { display: flex; flex-wrap: wrap; gap: 5px; justify-content: space-between; }
 .pomodoro-volume input { width: 100%; }
 .pomodoro-shell [hidden] { display: none !important; }
+.pomodoro-modes { display: flex; gap: 4px; flex-shrink: 0; }
+.pomodoro-modes button { flex: 1; padding: 4px 8px; background: #392d4c; }
+.pomodoro-modes button[aria-pressed="true"] { background: #a24671; border-color: #f58abc; font-weight: 700; }
+.pomodoro-modes button:disabled { opacity: .8; }
+.pomodoro-custom { display: flex; align-items: end; gap: 10px; }
+.pomodoro-custom label { display: flex; flex-direction: column; gap: 3px; font-size: 10px; }
+.pomodoro-custom input, .pomodoro-reminder-add input { box-sizing: border-box; width: 76px; height: 29px; background: #392d4c; border: 1px solid #95627f; border-radius: 6px; color: #ffd0e5; text-align: center; font: inherit; font-size: 14px; }
+.pomodoro-custom button { flex: 1; height: 29px; }
+.pomodoro-reminders { display: flex; flex-direction: column; gap: 9px; }
+.pomodoro-help { margin: 0; font-size: 10px; line-height: 1.5; color: #f7b7d2; }
+.pomodoro-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 68px; overflow-y: auto; font-size: 10px; }
+.pomodoro-chips button { padding: 4px 7px; }
+.pomodoro-reminder-add { display: flex; gap: 8px; justify-content: space-between; align-items: center; font-size: 11px; }
+.pomodoro-reminder-add button { flex: 1; }

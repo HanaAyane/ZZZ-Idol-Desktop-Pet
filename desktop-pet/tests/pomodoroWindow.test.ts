@@ -18,9 +18,11 @@ test("settings and menu opening never build the Pomodoro WebView on the GUI call
 
 test("concurrent open requests serialize creation without holding the timer state mutex", () => {
   const creation = pomodoro.slice(pomodoro.indexOf("fn create_or_show_window("), pomodoro.indexOf("#[cfg(test)]"));
-  assert.ok(creation.indexOf("window_creation.lock()") >= 0);
-  assert.ok(creation.indexOf("window_creation.lock()") < creation.indexOf('get_webview_window("pomodoro")'));
+  // rustfmt may split chained calls across lines; keep checking lock order.
+  const creationLock = creation.search(/window_creation\s*\.\s*lock\(\)/);
+  assert.ok(creationLock >= 0);
+  assert.ok(creationLock < creation.indexOf('get_webview_window("pomodoro")'));
   assert.ok(creation.indexOf('get_webview_window("pomodoro")') < creation.indexOf("WebviewWindowBuilder::new("));
   assert.match(creation, /let saved = manager\.snapshot\(\);/);
-  assert.doesNotMatch(creation.split(".build()")[0], /inner\.lock\(/);
+  assert.doesNotMatch(creation.split(".build()")[0], /inner\s*\.\s*lock\(/);
 });
