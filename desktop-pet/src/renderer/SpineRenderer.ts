@@ -8,6 +8,7 @@ import { DragSwayController, type DragSwaySnapshot } from "./DragSwayController"
 import { drawableBounds, measureLiftProfile, palmContact, projectLiftProfile,
   type LiftPoseProfile, type PoseBounds } from "./liftPoseGeometry";
 import type { WindowLiftGeometry } from "../pet/windowLiftGeometry";
+import { clampPetScale } from "../petScale";
 
 const PET_VISUAL_WIDTH = 360;
 const PET_VISUAL_HEIGHT = 480;
@@ -301,7 +302,7 @@ export class SpineRenderer {
   }
 
   setCharacterScale(scale: number): void {
-    const nextScale = Math.min(1.25, Math.max(0.6, scale));
+    const nextScale = clampPetScale(scale);
     if (Math.abs(this.characterScale - nextScale) < 0.001) return;
     this.characterScale = nextScale;
     this.fit();

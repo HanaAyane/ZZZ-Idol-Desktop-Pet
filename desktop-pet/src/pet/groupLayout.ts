@@ -9,6 +9,7 @@ import type {
   CoordinationRuntimeState,
   CoordinationWorkArea,
 } from "./coordinationTypes";
+import { PET_SCALE_MIN } from "../petScale.ts";
 
 export interface GroupLayoutOptions {
   mode: "gather" | "disperse";
@@ -30,7 +31,7 @@ const MIN_SPACING_CSS = 42;
 
 function physicalVisualWidth(snapshot: CoordinationRuntimeState): number {
   const scaleFactor = Math.max(1, snapshot.position?.scaleFactor ?? 1);
-  const scale = Math.max(0.6, snapshot.scale || 1);
+  const scale = Math.max(PET_SCALE_MIN, snapshot.scale || 1);
   return Math.max(
     24,
     (snapshot.visualAnchor?.width || snapshot.visualWidthCss || 220) * scaleFactor * scale,
