@@ -301,7 +301,7 @@ export class SpineRenderer {
   }
 
   setCharacterScale(scale: number): void {
-    const nextScale = Math.min(1.25, Math.max(0.6, scale));
+    const nextScale = Math.min(1.25, Math.max(0.2, scale));
     if (Math.abs(this.characterScale - nextScale) < 0.001) return;
     this.characterScale = nextScale;
     this.fit();

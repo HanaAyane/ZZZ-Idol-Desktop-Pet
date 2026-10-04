@@ -158,7 +158,7 @@ impl AppSettings {
         self.schema_version = SETTINGS_SCHEMA_VERSION;
         for id in PET_IDS {
             if let Some(pet) = self.pets.get_mut(id) {
-                pet.scale = pet.scale.clamp(0.6, 1.25);
+                pet.scale = pet.scale.clamp(0.2, 1.25);
             }
         }
         self.walk_frequency = self.walk_frequency.clamp(0.5, 2.0);
@@ -310,7 +310,7 @@ fn migrate_settings(mut settings: AppSettings) -> AppSettings {
         settings.debug_mode = false;
     }
     if settings.schema_version < 3 {
-        let legacy_scale = settings.scale.take().unwrap_or(1.0).clamp(0.6, 1.25);
+        let legacy_scale = settings.scale.take().unwrap_or(1.0).clamp(0.2, 1.25);
         for id in PET_IDS {
             if let Some(pet) = settings.pets.get_mut(id) {
                 pet.visible = true;
@@ -472,7 +472,7 @@ fn update_pet_instance(
         pet.visible = value;
     }
     if let Some(value) = patch.scale {
-        pet.scale = value.clamp(0.6, 1.25);
+        pet.scale = value.clamp(0.2, 1.25);
     }
     if let Some(value) = patch.last_placement {
         pet.last_placement = value;

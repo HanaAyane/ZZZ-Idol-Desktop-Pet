@@ -1054,7 +1054,7 @@ export class PetApp {
   }
 
   private applyCharacterScale(scale: number): void {
-    const normalized = Math.round(Math.min(1.25, Math.max(0.6, scale)) * 100) / 100;
+    const normalized = Math.round(Math.min(1.25, Math.max(0.2, scale)) * 100) / 100;
     this.renderer.setCharacterScale(normalized);
     this.persistPetSettings({ scale: normalized });
   }
@@ -1198,7 +1198,7 @@ export class PetApp {
     const patch: Parameters<typeof updatePetSettings>[1] = {};
     try {
       const legacyScale = Number(localStorage.getItem("zzz-idol-character-scale-v1"));
-      if (Number.isFinite(legacyScale) && legacyScale >= 0.6 && legacyScale <= 1.25 && settings.pets.airui.scale === 1) {
+      if (Number.isFinite(legacyScale) && legacyScale >= 0.2 && legacyScale <= 1.25 && settings.pets.airui.scale === 1) {
         patch.scale = legacyScale;
       }
       const rawPosition = localStorage.getItem("zzz-idol-pet-position-v1");

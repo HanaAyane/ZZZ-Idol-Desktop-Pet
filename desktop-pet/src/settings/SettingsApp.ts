@@ -393,7 +393,7 @@ export class SettingsApp {
   }
 
   private petScaleRow(id: CharacterId, title: string): string {
-    return `<label class="setting-row setting-row--range"><span><strong>${title}</strong><small>只缩放该角色，透明安全画布保持不变</small></span><span class="scale-control"><input type="range" min="60" max="125" step="5" data-pet-scale="${id}"><output data-pet-scale-output="${id}">100%</output></span></label>`;
+    return `<label class="setting-row setting-row--range"><span><strong>${title}</strong><small>只缩放该角色，透明安全画布保持不变</small></span><span class="scale-control"><input type="range" min="20" max="125" step="5" data-pet-scale="${id}"><output data-pet-scale-output="${id}">100%</output></span></label>`;
   }
 
   private selectRow(key: keyof AppSettings, title: string, description: string, options: string[][]): string {
