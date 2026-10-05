@@ -21,9 +21,9 @@ for (const spec of catalog.actions) {
     const offset = new Vector2(), size = new Vector2();
     skeleton.getBounds(offset, size);
     const fit = { x: offset.x, y: offset.y, width: size.x, height: size.y };
-    const small = projectLiftProfile(profile, fit, 520, 600, 0.3, 0.9);
+    const small = projectLiftProfile(profile, fit, 520, 600, 0.2, 0.9);
     const large = projectLiftProfile(profile, fit, 520, 600, 1.25, 0.9);
-    assert.ok(small.handYCss > 170, "30% 时手掌不能退回旧的画布固定点 y=96");
+    assert.ok(small.handYCss > 170, "20% 时手掌不能退回旧的画布固定点 y=96");
     assert.ok(small.handYCss > large.handYCss, "increasing scale moves the palms up");
     assert.ok(large.visibleBounds.height > small.visibleBounds.height);
     assert.ok(small.visibleBounds.height < 400, "transparent canvas is not the body envelope");
@@ -38,6 +38,6 @@ for (const spec of catalog.actions) {
       state.update(1 / 60); state.apply(skeleton); skeleton.update(1 / 60);
       skeleton.updateWorldTransform(Physics.update);
     }
-    console.log(`${spec.characterId}: 30% 手掌 y=${small.handYCss.toFixed(1)}，可见高度=${small.visibleBounds.height.toFixed(1)}`);
+    console.log(`${spec.characterId}: 20% 手掌 y=${small.handYCss.toFixed(1)}，可见高度=${small.visibleBounds.height.toFixed(1)}`);
   });
 }

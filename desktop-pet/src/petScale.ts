@@ -1,4 +1,4 @@
-export const PET_SCALE_MIN_PERCENT = 30;
+export const PET_SCALE_MIN_PERCENT = 20;
 export const PET_SCALE_MAX_PERCENT = 125;
 export const PET_SCALE_STEP_PERCENT = 5;
 

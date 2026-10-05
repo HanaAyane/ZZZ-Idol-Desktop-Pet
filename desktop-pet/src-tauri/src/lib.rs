@@ -23,7 +23,7 @@ use diagnostics::{DiagnosticExportResult, DiagnosticSummary};
 use window_lift::{WindowLiftManager, WindowLiftRect, WindowLiftSnapshot};
 
 const SETTINGS_SCHEMA_VERSION: u32 = 6;
-const PET_SCALE_MIN: f64 = 0.3;
+const PET_SCALE_MIN: f64 = 0.2;
 const PET_SCALE_MAX: f64 = 1.25;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]

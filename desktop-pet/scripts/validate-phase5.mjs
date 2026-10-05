@@ -50,10 +50,10 @@ assert(renderer.includes("mirroredFromDefault"), "渲染器缺少相对默认方
 assert(renderer.includes("setCharacterScale(scale: number)"), "渲染器缺少人物缩放接口");
 assert(renderer.includes("* this.characterScale"), "人物比例未应用到自适应渲染尺寸");
 assert(
-  petScale.includes("PET_SCALE_MIN_PERCENT = 30")
+  petScale.includes("PET_SCALE_MIN_PERCENT = 20")
     && settings.includes('min="${PET_SCALE_MIN_PERCENT}"')
     && settings.includes('max="${PET_SCALE_MAX_PERCENT}"'),
-  "设置页缺少 30%～125% 的人物缩放滑杆",
+  "设置页缺少 20%～125% 的人物缩放滑杆",
 );
 assert(events.includes('APP_SETTINGS_STATE'), "设置窗口与桌宠窗口缺少统一设置同步事件");
 assert(petApp.includes('this.persistPetSettings({ scale: normalized })'), "人物独立缩放未持久化");
