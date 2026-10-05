@@ -4,6 +4,7 @@ import test from "node:test";
 import type { CharacterId } from "../src/characters/types.ts";
 import { calculateGroupLayout } from "../src/pet/groupLayout.ts";
 import type { CoordinationRuntimeState } from "../src/pet/coordinationTypes.ts";
+import { PET_SCALE_MIN } from "../src/petScale.ts";
 
 const workArea = { x: 0, y: 0, width: 3420, height: 2160 };
 const visualWidths: Record<CharacterId, number> = {
@@ -33,7 +34,7 @@ function runtimeState(id: CharacterId, x: number): CoordinationRuntimeState {
     visualAnchor: { x: 260, y: 432, width: visualWidths[id] },
     visualWidthCss: visualWidths[id],
     preferredSpacingCss: 46,
-    scale: 0.6,
+    scale: PET_SCALE_MIN,
     lastUserInteractionAt: 0,
     reportedAt: Date.now(),
   };
@@ -64,8 +65,9 @@ test("gather near the right edge shifts the whole group without collapsing visua
     const current = targets[index];
     const previousCenter = previous.target.x + 520;
     const currentCenter = current.target.x + 520;
-    const minimumGap = visualWidths[previous.id] * 1.2 / 2
-      + visualWidths[current.id] * 1.2 / 2
+    const renderedScale = PET_SCALE_MIN * 2;
+    const minimumGap = visualWidths[previous.id] * renderedScale / 2
+      + visualWidths[current.id] * renderedScale / 2
       + 92;
     assert.ok(
       currentCenter - previousCenter >= minimumGap - 1,

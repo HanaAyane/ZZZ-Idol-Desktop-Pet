@@ -23,6 +23,8 @@ use diagnostics::{DiagnosticExportResult, DiagnosticSummary};
 use window_lift::{WindowLiftManager, WindowLiftRect, WindowLiftSnapshot};
 
 const SETTINGS_SCHEMA_VERSION: u32 = 6;
+const PET_SCALE_MIN: f64 = 0.2;
+const PET_SCALE_MAX: f64 = 1.25;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -158,7 +160,7 @@ impl AppSettings {
         self.schema_version = SETTINGS_SCHEMA_VERSION;
         for id in PET_IDS {
             if let Some(pet) = self.pets.get_mut(id) {
-                pet.scale = pet.scale.clamp(0.2, 1.25);
+                pet.scale = pet.scale.clamp(PET_SCALE_MIN, PET_SCALE_MAX);
             }
         }
         self.walk_frequency = self.walk_frequency.clamp(0.5, 2.0);
@@ -310,7 +312,11 @@ fn migrate_settings(mut settings: AppSettings) -> AppSettings {
         settings.debug_mode = false;
     }
     if settings.schema_version < 3 {
-        let legacy_scale = settings.scale.take().unwrap_or(1.0).clamp(0.2, 1.25);
+        let legacy_scale = settings
+            .scale
+            .take()
+            .unwrap_or(1.0)
+            .clamp(PET_SCALE_MIN, PET_SCALE_MAX);
         for id in PET_IDS {
             if let Some(pet) = settings.pets.get_mut(id) {
                 pet.visible = true;
@@ -472,7 +478,7 @@ fn update_pet_instance(
         pet.visible = value;
     }
     if let Some(value) = patch.scale {
-        pet.scale = value.clamp(0.2, 1.25);
+        pet.scale = value.clamp(PET_SCALE_MIN, PET_SCALE_MAX);
     }
     if let Some(value) = patch.last_placement {
         pet.last_placement = value;
@@ -1579,6 +1585,20 @@ mod tests {
         assert!(migrated.selected_character.is_none());
         assert!(migrated.scale.is_none());
         assert!(migrated.last_placement.is_none());
+    }
+
+    #[test]
+    fn normalizes_pet_scale_to_supported_range() {
+        let mut settings = AppSettings::default();
+        settings.pets.airui.scale = 0.1;
+        settings.pets.nangong.scale = PET_SCALE_MIN;
+        settings.pets.qianxia.scale = 2.0;
+
+        let normalized = settings.normalize();
+
+        assert!((normalized.pets.airui.scale - PET_SCALE_MIN).abs() < f64::EPSILON);
+        assert!((normalized.pets.nangong.scale - PET_SCALE_MIN).abs() < f64::EPSILON);
+        assert!((normalized.pets.qianxia.scale - PET_SCALE_MAX).abs() < f64::EPSILON);
     }
 
     #[test]

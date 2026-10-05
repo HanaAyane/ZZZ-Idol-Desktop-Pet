@@ -12,12 +12,13 @@ async function source(relativePath) {
   return readFile(path.join(projectRoot, relativePath), "utf8");
 }
 
-const [roaming, stateMachine, petApp, renderer, settings, events, tauriLib, config] = await Promise.all([
+const [roaming, stateMachine, petApp, renderer, settings, petScale, events, tauriLib, config] = await Promise.all([
   source("src/pet/PetRoamingController.ts"),
   source("src/pet/PetStateMachine.ts"),
   source("src/pet/PetApp.ts"),
   source("src/renderer/SpineRenderer.ts"),
   source("src/settings/SettingsApp.ts"),
+  source("src/petScale.ts"),
   source("src/characters/events.ts"),
   source("src-tauri/src/lib.rs"),
   source("src-tauri/tauri.conf.json"),
@@ -48,7 +49,12 @@ assert(petApp.includes('this.facingDirection = "left"'), "切换角色没有恢�
 assert(renderer.includes("mirroredFromDefault"), "渲染器缺少相对默认方向的镜像状态");
 assert(renderer.includes("setCharacterScale(scale: number)"), "渲染器缺少人物缩放接口");
 assert(renderer.includes("* this.characterScale"), "人物比例未应用到自适应渲染尺寸");
-assert(settings.includes('min="60" max="125"'), "设置页缺少安全范围的人物缩放滑杆");
+assert(
+  petScale.includes("PET_SCALE_MIN_PERCENT = 20")
+    && settings.includes('min="${PET_SCALE_MIN_PERCENT}"')
+    && settings.includes('max="${PET_SCALE_MAX_PERCENT}"'),
+  "设置页缺少 20%～125% 的人物缩放滑杆",
+);
 assert(events.includes('APP_SETTINGS_STATE'), "设置窗口与桌宠窗口缺少统一设置同步事件");
 assert(petApp.includes('this.persistPetSettings({ scale: normalized })'), "人物独立缩放未持久化");
 assert(

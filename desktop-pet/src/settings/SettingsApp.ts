@@ -6,6 +6,11 @@ import { APP_SETTINGS_STATE, COORDINATION_STATE, listenAppEvent } from "../chara
 import type { CharacterId } from "../characters/types";
 import type { CoordinationSnapshot } from "../pet/coordinationTypes";
 import {
+  PET_SCALE_MAX_PERCENT,
+  PET_SCALE_MIN_PERCENT,
+  PET_SCALE_STEP_PERCENT,
+} from "../petScale";
+import {
   exportDiagnosticReport,
   getDiagnosticSummary,
   type DiagnosticSummary,
@@ -393,7 +398,7 @@ export class SettingsApp {
   }
 
   private petScaleRow(id: CharacterId, title: string): string {
-    return `<label class="setting-row setting-row--range"><span><strong>${title}</strong><small>只缩放该角色，透明安全画布保持不变</small></span><span class="scale-control"><input type="range" min="20" max="125" step="5" data-pet-scale="${id}"><output data-pet-scale-output="${id}">100%</output></span></label>`;
+    return `<label class="setting-row setting-row--range"><span><strong>${title}</strong><small>只缩放该角色，透明安全画布保持不变</small></span><span class="scale-control"><input type="range" min="${PET_SCALE_MIN_PERCENT}" max="${PET_SCALE_MAX_PERCENT}" step="${PET_SCALE_STEP_PERCENT}" data-pet-scale="${id}"><output data-pet-scale-output="${id}">100%</output></span></label>`;
   }
 
   private selectRow(key: keyof AppSettings, title: string, description: string, options: string[][]): string {
