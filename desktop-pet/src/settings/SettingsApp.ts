@@ -184,6 +184,8 @@ export class SettingsApp {
       </main>`;
 
     this.bindControls();
+    this.syncRangeFills();
+    this.syncSelects();
   }
 
   async mount(): Promise<void> {
@@ -270,6 +272,7 @@ export class SettingsApp {
       input.addEventListener("input", () => {
         const output = this.root.querySelector<HTMLOutputElement>(`[data-pet-scale-output='${input.dataset.petScale}']`);
         if (output) output.textContent = `${input.value}%`;
+        this.syncRangeFill(input);
       });
       input.addEventListener("change", () => {
         void this.savePetSettings(input.dataset.petScale as CharacterId, { scale: Number(input.value) / 100 });
@@ -282,11 +285,17 @@ export class SettingsApp {
       input.addEventListener("input", () => {
         const output = this.root.querySelector<HTMLOutputElement>(`[data-output='${input.dataset.setting}']`);
         if (output) output.textContent = `${input.value}%`;
+        this.syncRangeFill(input);
         this.queueSave({ [input.dataset.setting!]: Number(input.value) / 100 } as AppSettingsPatch);
       });
     });
-    this.root.querySelectorAll<HTMLSelectElement>("select[data-setting]").forEach((select) => {
-      select.addEventListener("change", () => this.queueSave({ [select.dataset.setting!]: select.value } as AppSettingsPatch, 0));
+    this.bindSelects();
+    this.root.querySelectorAll<HTMLElement>("[data-pet-card]").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if ((event.target as HTMLElement).closest("label, input, button, a")) return;
+        const input = card.querySelector<HTMLInputElement>("[data-pet-visible]");
+        if (input && !input.disabled) input.click();
+      });
     });
     this.root.querySelectorAll<HTMLInputElement>("input[data-coordination-setting]").forEach((input) => {
       input.addEventListener("change", () => {
@@ -456,6 +465,108 @@ export class SettingsApp {
       if (control) control.checked = Boolean(value);
     }
     this.renderCoordinationState(this.coordinationSnapshot);
+    this.syncRangeFills();
+    this.syncSelects();
+  }
+
+  /** 把滑块的已填充比例同步给样式，用于渐变着色。 */
+  private syncRangeFill(input: HTMLInputElement): void {
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const value = Number(input.value);
+    const ratio = Number.isFinite(value) && max > min ? (value - min) / (max - min) : 0;
+    input.style.setProperty("--fill", `${(Math.min(1, Math.max(0, ratio)) * 100).toFixed(2)}%`);
+  }
+
+  private syncRangeFills(): void {
+    this.root.querySelectorAll<HTMLInputElement>("input[type='range']").forEach((input) => this.syncRangeFill(input));
+  }
+
+  /** 自绘下拉框：按钮 + 选项列表，支持点击外部、Esc、方向键与回车选择。 */
+  private bindSelects(): void {
+    document.addEventListener("click", () => this.closeSelects());
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) {
+      const button = control.querySelector<HTMLButtonElement>(".settings-select-button");
+      const list = control.querySelector<HTMLUListElement>(".settings-select-list");
+      const input = control.querySelector<HTMLInputElement>("input[data-setting]");
+      if (!button || !list || !input) continue;
+      const options = Array.from(list.querySelectorAll<HTMLLIElement>("[role='option']"));
+      const close = (focusButton = false): void => {
+        list.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+        if (focusButton) button.focus();
+      };
+      const open = (direction: 1 | -1): void => {
+        this.closeSelects(control);
+        list.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+        const index = options.findIndex((option) => option.getAttribute("aria-selected") === "true");
+        const target = direction === 1
+          ? options[index === -1 ? 0 : index]
+          : options[index === -1 ? options.length - 1 : index];
+        target?.focus();
+      };
+      const choose = (option: HTMLLIElement): void => {
+        const value = option.dataset.value ?? "";
+        close(true);
+        if (input.value === value) return;
+        input.value = value;
+        this.syncSelect(control);
+        this.queueSave({ [input.dataset.setting!]: value } as AppSettingsPatch, 0);
+      };
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (list.hidden) open(1); else close();
+      });
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          open(1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          open(-1);
+        } else if (event.key === "Escape") {
+          close();
+        }
+      });
+      options.forEach((option, index) => {
+        option.addEventListener("click", (event) => { event.stopPropagation(); choose(option); });
+        option.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowDown") { event.preventDefault(); options[Math.min(options.length - 1, index + 1)]?.focus(); }
+          else if (event.key === "ArrowUp") { event.preventDefault(); options[Math.max(0, index - 1)]?.focus(); }
+          else if (event.key === "Home") { event.preventDefault(); options[0]?.focus(); }
+          else if (event.key === "End") { event.preventDefault(); options[options.length - 1]?.focus(); }
+          else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(option); }
+          else if (event.key === "Escape") { event.preventDefault(); close(true); }
+          else if (event.key === "Tab") close();
+        });
+      });
+    }
+  }
+
+  private closeSelects(except?: HTMLElement): void {
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) {
+      if (control === except) continue;
+      const list = control.querySelector<HTMLUListElement>(".settings-select-list");
+      if (list && !list.hidden) {
+        list.hidden = true;
+        control.querySelector<HTMLButtonElement>(".settings-select-button")?.setAttribute("aria-expanded", "false");
+      }
+    }
+  }
+
+  private syncSelect(control: HTMLElement): void {
+    const input = control.querySelector<HTMLInputElement>("input[data-setting]");
+    if (!input) return;
+    const options = Array.from(control.querySelectorAll<HTMLLIElement>("[role='option']"));
+    const selected = options.find((option) => option.dataset.value === input.value) ?? options[0];
+    for (const option of options) option.setAttribute("aria-selected", String(option === selected));
+    const label = control.querySelector<HTMLElement>("[data-select-label]");
+    if (label) label.textContent = selected?.textContent ?? "";
+  }
+
+  private syncSelects(): void {
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) this.syncSelect(control);
   }
 
   private renderCoordinationState(snapshot: CoordinationSnapshot | null): void {
@@ -505,7 +616,12 @@ export class SettingsApp {
   }
 
   private selectRow(key: keyof AppSettings, title: string, description: string, options: string[][]): string {
-    return `<label class="setting-row"><span><strong>${title}</strong><small>${description}</small></span><select data-setting="${key}">${options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label>`;
+    const [value, label] = options[0];
+    return `<div class="setting-row"><span><strong>${title}</strong><small>${description}</small></span><div class="settings-select" data-select="${key}">
+      <button type="button" class="settings-select-button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>${label}</span></button>
+      <ul class="settings-select-list" role="listbox" aria-label="${title}" hidden>${options.map(([optionValue, optionLabel]) => `<li role="option" tabindex="-1" data-value="${optionValue}" aria-selected="false">${optionLabel}</li>`).join("")}</ul>
+      <input type="hidden" data-setting="${key}" value="${value}">
+    </div></div>`;
   }
 
   private requireElement<T extends Element = HTMLElement>(selector: string): T {
