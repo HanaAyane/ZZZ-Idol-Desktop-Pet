@@ -13,7 +13,7 @@
 - 推荐下载 `ZZZ.Idol.Desktop.Pet_0.1.2_x64-setup.exe`。
 - 需要 MSI 安装包时，下载 `ZZZ.Idol.Desktop.Pet_0.1.2_x64_en-US.msi`，与 EXE 二选一即可。
 - 更新前请从托盘菜单退出桌宠，再运行安装包。保留现有设置和番茄钟数据，无需卸载旧版。
-- 可使用附件 `SHA256SUMS.txt` 校验下载文件。Windows 安装包未做代码签名。
+- Windows 安装包未做代码签名。
 
 本次提供 Windows x64 安装包。macOS 用户可继续使用 [v0.1.1](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1) 的安装包。
 
