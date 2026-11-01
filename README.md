@@ -41,12 +41,12 @@
 
 顶部徽章自动显示所有 Releases 附件的累计下载次数与最新正式版的附件下载次数，更新有缓存延迟。统计包含 DMG、EXE、MSI 等上传附件；重复下载会累计，不代表独立用户数，也不包含 GitHub 自动生成的源码 ZIP/TAR 下载。
 
-macOS 与 Windows 最新版均为 **v0.1.1**，新增自定义计时与多时间点提醒。[查看更新说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1)。
+Windows 最新版为 **v0.1.2**，补齐活动室菜单入口并修复更新检查限流问题。[查看更新说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.2)。macOS 安装包仍为 **v0.1.1**。
 
 | 系统 | 下载 | 安装方式 |
 | :--- | :--- | :--- |
 | macOS · Apple Silicon（M 系列） | [下载 v0.1.1 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.1/ZZZ-Idol-Desktop-Pet_0.1.1_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
-| Windows · x64 | [下载 v0.1.1 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.1/ZZZ.Idol.Desktop.Pet_0.1.1_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.1/ZZZ.Idol.Desktop.Pet_0.1.1_x64_en-US.msi) |
+| Windows · x64 | [下载 v0.1.2 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.2/ZZZ.Idol.Desktop.Pet_0.1.2_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.2/ZZZ.Idol.Desktop.Pet_0.1.2_x64_en-US.msi) |
 
 macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1)。
 
