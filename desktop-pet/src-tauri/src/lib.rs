@@ -1394,6 +1394,7 @@ pub fn run() {
                 gaze_tracking: gaze_tracking.clone(),
                 coordination: coordination_enabled.clone(),
             });
+            let room_open = MenuItem::with_id(app, "room_open", "活动室", true, None::<&str>)?;
             let pomodoro_open = MenuItem::with_id(app, "pomodoro_open", "番茄钟", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(
@@ -1409,6 +1410,7 @@ pub fn run() {
                     &disperse_pets,
                     &gather_here,
                     &show_settings,
+                    &room_open,
                     &pomodoro_open,
                     &hide_pet,
                     &quit,
@@ -1457,6 +1459,7 @@ pub fn run() {
                             },
                         );
                     }
+                    "room_open" => room::request_show_window(app.clone()),
                     "pomodoro_open" => pomodoro::request_show_window(app.clone()),
                     "show_settings" => request_settings_window(app.clone()),
                     "always_on_top" => {

@@ -96,9 +96,21 @@ pub fn get_room_state(window: WebviewWindow) -> Result<Snapshot, String> {
 #[tauri::command]
 pub async fn show_room_window(window: WebviewWindow) -> Result<Snapshot, String> {
     authorized(&window)?;
-    let app = window.app_handle().clone();
+    show_window(window.app_handle().clone()).await
+}
+
+pub fn request_show_window(app: tauri::AppHandle) {
+    // 菜单回调只提交异步任务，避免在 Windows GUI 线程上阻塞创建 WebView。
+    tauri::async_runtime::spawn(async move {
+        if let Err(error) = show_window(app).await {
+            log::error!(target: "desktop_pet::room", "活动室打开失败：{error}");
+        }
+    });
+}
+
+async fn show_window(app: tauri::AppHandle) -> Result<Snapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        // Reuse the window; its WebGL renderers are disposed when membership is cleared.
+        // 复用已有窗口；清空入住角色时会释放其 WebGL 渲染器。
         let creation = app.state::<crate::SettingsWindowLock>();
         let _guard = creation.0.lock().map_err(|_| "窗口创建锁不可用")?;
         let w = if let Some(w) = app.get_webview_window("room") {
