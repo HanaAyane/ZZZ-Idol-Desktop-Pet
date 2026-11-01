@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkForUpdates, compareVersions, LATEST_RELEASE_API, RELEASES_URL } from "../src/settings/updates.ts";
+import { checkForUpdates, compareVersions, LATEST_RELEASE_API, FALLBACK_RELEASE_URL, RELEASES_URL } from "../src/settings/updates.ts";
 
 const release = (tag_name = "v0.1.1") => ({ tag_name, draft: false, prerelease: false });
 const respond = (body: unknown, status = 200): typeof fetch => async () =>
@@ -84,4 +84,48 @@ test("closing settings can cancel the request, including an already-aborted sign
   controller.abort();
   await assert.rejects(pending, /已取消/);
   await assert.rejects(checkForUpdates("0.1.1", { fetcher: waitForAbort, signal: controller.signal }), /已取消/);
+});
+
+
+test("API 限流时使用备用源并限定下载链接", async () => {
+  for (const status of [403, 429]) {
+    const urls: unknown[] = [];
+    const result = await checkForUpdates("0.1.2", { fetcher: async (url, options) => {
+      urls.push(url);
+      if (url === LATEST_RELEASE_API) return new Response("{}", { status });
+      assert.equal(url, FALLBACK_RELEASE_URL);
+      assert.equal(options?.credentials, "omit");
+      assert.equal(options?.cache, "no-store");
+      assert.ok(options?.signal);
+      return new Response(JSON.stringify({ ...release("v0.1.21"), html_url: "https://untrusted.example" }));
+    } });
+    assert.deepEqual(urls, [LATEST_RELEASE_API, FALLBACK_RELEASE_URL]);
+    assert.deepEqual(result, { status: "available", latestVersion: "0.1.21", releaseUrl: `${RELEASES_URL}/tag/v0.1.21` });
+  }
+});
+
+test("备用源失败或元数据无效时不会误报已是最新版本", async () => {
+  for (const body of [null, {}, release("v1.0.0-beta.1"), { ...release(), draft: true },
+    { ...release(), prerelease: true }, release("../../outside")]) {
+    await assert.rejects(checkForUpdates("0.1.2", { fetcher: async (url) => {
+      if (url === LATEST_RELEASE_API) return new Response("{}", { status: 403 });
+      return new Response(JSON.stringify(body));
+    } }));
+  }
+  await assert.rejects(checkForUpdates("0.1.2", { fetcher: async (url) => {
+    if (url === LATEST_RELEASE_API) return new Response("{}", { status: 429 });
+    throw new TypeError("offline");
+  } }), /备用更新源/);
+});
+
+test("备用源请求支持取消与超时", async () => {
+  const fetcher: typeof fetch = async (url, options) => {
+    if (url === LATEST_RELEASE_API) return new Response("{}", { status: 429 });
+    return waitForAbort(url, options);
+  };
+  await assert.rejects(checkForUpdates("0.1.2", { fetcher, timeoutMs: 10 }), /超时/);
+  const controller = new AbortController();
+  const pending = checkForUpdates("0.1.2", { fetcher, signal: controller.signal });
+  controller.abort();
+  await assert.rejects(pending, /已取消/);
 });

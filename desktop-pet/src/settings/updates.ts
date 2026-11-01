@@ -1,6 +1,8 @@
 export const RELEASES_URL = "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases";
 export const LATEST_RELEASE_API = "https://api.github.com/repos/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/latest";
 
+export const FALLBACK_RELEASE_URL = "https://raw.githubusercontent.com/HanaAyane/ZZZ-Idol-Desktop-Pet/main/updates/latest.json";
+
 interface Version {
   core: bigint[];
   prerelease: string[];
@@ -61,7 +63,7 @@ export async function checkForUpdates(
   if (signal?.aborted) controller.abort();
   const timeout = setTimeout(abort, timeoutMs);
   try {
-    const response = await fetcher(LATEST_RELEASE_API, {
+    let response = await fetcher(LATEST_RELEASE_API, {
       headers: { Accept: "application/vnd.github+json" },
       cache: "no-store",
       credentials: "omit",
@@ -69,7 +71,18 @@ export async function checkForUpdates(
     });
     if (response.status === 404) throw new Error("暂未找到正式 Release，请前往 GitHub 查看。");
     if (response.status === 403 || response.status === 429) {
-      throw new Error("GitHub 请求受限，请稍后重试，或前往 GitHub 手动查看。");
+      const limitMessage = "GitHub 请求受限，备用更新源也暂不可用，请稍后重试，或前往 GitHub 手动查看。";
+      try {
+        // 备用元数据由正式 Release 发布事件同步，不消耗匿名 GitHub API 额度。
+        response = await fetcher(FALLBACK_RELEASE_URL, {
+          cache: "no-store",
+          credentials: "omit",
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(limitMessage);
+      } catch {
+        throw new Error(limitMessage);
+      }
     }
     if (!response.ok) throw new Error(`GitHub 暂时无法访问（HTTP ${response.status}），请稍后重试。`);
     const release: unknown = await response.json();

@@ -83,8 +83,8 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' customprotocol: asset:; connect-src 'self' ipc: http://ipc.localhost https://api.github.com; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'",
-      "devCsp": "default-src 'self' customprotocol: asset: http://localhost:1420; connect-src 'self' ipc: http://ipc.localhost https://api.github.com http://localhost:1420 ws://localhost:1421; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' http://localhost:1420"
+      "csp": "default-src 'self' customprotocol: asset:; connect-src 'self' ipc: http://ipc.localhost https://api.github.com https://raw.githubusercontent.com; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'",
+      "devCsp": "default-src 'self' customprotocol: asset: http://localhost:1420; connect-src 'self' ipc: http://ipc.localhost https://api.github.com https://raw.githubusercontent.com http://localhost:1420 ws://localhost:1421; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' http://localhost:1420"
     }
   },
   "bundle": {
