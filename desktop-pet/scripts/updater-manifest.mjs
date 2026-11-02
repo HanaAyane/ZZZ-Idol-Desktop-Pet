@@ -7,7 +7,7 @@ export async function createUpdaterManifest(directory, version, repository, note
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository)) throw new Error("仓库名称无效");
   const files = await readdir(directory);
   const platforms = {};
-  for (const [suffix, bundle] of [["_x64-setup.exe", "nsis"], ["_x64_en-US.msi", "msi"]]) {
+  for (const [suffix, bundle] of [["_x64-setup.exe", "nsis"]]) {
     const file = files.find(name => name.endsWith(`_${version}${suffix}`));
     if (!file) throw new Error(`缺少 ${bundle} 安装包`);
     const signature = (await readFile(path.join(directory, `${file}.sig`), "utf8")).trim();

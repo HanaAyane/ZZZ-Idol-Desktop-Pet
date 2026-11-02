@@ -46,7 +46,7 @@ Windows 最新版为 **v0.1.2**，补齐活动室菜单入口并修复更新检�
 | 系统 | 下载 | 安装方式 |
 | :--- | :--- | :--- |
 | macOS · Apple Silicon（M 系列） | [下载 v0.1.1 DMG](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.1/ZZZ-Idol-Desktop-Pet_0.1.1_aarch64.dmg) | 打开后将应用拖入「应用程序」 |
-| Windows · x64 | [下载 v0.1.2 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.2/ZZZ.Idol.Desktop.Pet_0.1.2_x64-setup.exe) | 运行安装向导；[MSI 可选](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.2/ZZZ.Idol.Desktop.Pet_0.1.2_x64_en-US.msi) |
+| Windows · x64 | [下载 v0.1.2 EXE](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/download/v0.1.2/ZZZ.Idol.Desktop.Pet_0.1.2_x64-setup.exe) | 运行 EXE 安装向导 |
 
 macOS 暂无 Intel 安装包，首次打开可能被系统拦截，请查看 [macOS 安装说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.1)。
 
@@ -88,7 +88,7 @@ macOS 应用打包：
 npm run tauri -- build --bundles app -- --locked
 ```
 
-产物位于 `desktop-pet/src-tauri/target/release/bundle/macos/`。Windows x64 的 NSIS / MSI 由 [GitHub Actions](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/actions/workflows/windows-build.yml) 构建。
+产物位于 `desktop-pet/src-tauri/target/release/bundle/macos/`。Windows x64 的 NSIS EXE 由 [GitHub Actions](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/actions/workflows/windows-build.yml) 构建。
 
 [完整功能与开发说明](desktop-pet/README.md) · [Windows 实机验收清单](WINDOWS-TESTING.md)
 

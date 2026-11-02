@@ -83,11 +83,11 @@ jobs:
           @{ version = $version; bundle = @{ createUpdaterArtifacts = $signed } } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 src-tauri/tauri.windows-ci.conf.json
           "value=$version" >> $env:GITHUB_OUTPUT
 
-      - name: Build NSIS and MSI installers
+      - name: Build NSIS EXE installer
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ github.ref_type == 'tag' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ github.ref_type == 'tag' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
-        run: npm run tauri build -- --target x86_64-pc-windows-msvc --config src-tauri/tauri.windows-ci.conf.json --bundles nsis,msi
+        run: npm run tauri build -- --target x86_64-pc-windows-msvc --config src-tauri/tauri.windows-ci.conf.json --bundles nsis
 
       - name: Assemble test package
         shell: pwsh
@@ -95,9 +95,6 @@ jobs:
           $output = "windows-artifacts"
           New-Item -ItemType Directory -Force $output | Out-Null
           Get-ChildItem src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe* | ForEach-Object {
-            Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $output ($_.Name -replace ' ', '.'))
-          }
-          Get-ChildItem src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi* | ForEach-Object {
             Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $output ($_.Name -replace ' ', '.'))
           }
           if (Test-Path "$output/*.exe.sig") {
@@ -117,7 +114,7 @@ jobs:
           Built at UTC: $([DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))
           "@ | Set-Content -Encoding utf8 "$output/BUILD-INFO.txt"
 
-          Get-ChildItem "$output/*" -Include *.exe,*.msi -File |
+          Get-ChildItem "$output/*" -Include *.exe -File |
             Get-FileHash -Algorithm SHA256 |
             ForEach-Object { "{0}  {1}" -f $_.Hash.ToLowerInvariant(), $_.Path.Split([IO.Path]::DirectorySeparatorChar)[-1] } |
             Set-Content -Encoding ascii "$output/SHA256SUMS.txt"

@@ -32,8 +32,6 @@ body:
       label: 安装包
       options:
         - NSIS .exe
-        - MSI .msi
-        - 两者都测试过
     validations:
       required: true
 
@@ -109,5 +107,5 @@ body:
       options:
         - label: 我已确认测试包中的 commit 和 Test version
           required: true
-        - label: 我已确认安装时没有同时保留 NSIS 与 MSI 两种安装来源
+        - label: 我使用的是 EXE 安装包；若曾安装旧版 MSI，已先卸载旧版
           required: true

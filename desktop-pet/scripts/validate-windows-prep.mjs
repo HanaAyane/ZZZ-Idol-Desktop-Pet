@@ -20,7 +20,7 @@ assert(workflow.includes("npm ci"), "Windows CI 没有锁定安装前端依赖")
 assert(workflow.includes("npm run validate:windows-prep"), "Windows CI 没有执行 Windows 准备校验");
 assert(packageJson.includes('"validate:windows-prep": "npm run validate:phase7'), "Windows 准备校验没有串联阶段 2～7回归");
 assert(workflow.includes("cargo check") && workflow.includes("--locked"), "Windows CI 没有锁定 Rust 检查");
-assert(workflow.includes("--bundles nsis,msi"), "Windows CI 没有同时生成 NSIS 与 MSI");
+assert(/--bundles nsis\s*(?:\r?\n|$)/.test(workflow), "Windows CI 必须仅生成 NSIS EXE");
 assert(workflow.includes('0.1.${{ github.run_number }}'), "Windows 测试包没有唯一可升级版本");
 assert(workflow.includes("SHA256SUMS.txt") && workflow.includes("BUILD-INFO.txt"), "Artifact 缺少校验值或构建身份");
 assert(workflow.includes("actions/upload-artifact@v4"), "Windows 安装包没有上传为 Actions Artifact");
@@ -32,4 +32,4 @@ for (const field of ["Commit / 测试版本", "Windows 版本与架构", "显示
   assert(issueForm.includes(field), `Windows Bug 表单缺少：${field}`);
 }
 
-console.log("Windows 阶段 8 准备校验通过：x64 NSIS/MSI 构建、唯一测试版本、Artifact 身份校验、实机矩阵和 Bug 表单均已就绪。");
+console.log("Windows 阶段 8 准备校验通过：x64 NSIS EXE 构建、唯一测试版本、Artifact 身份校验、实机矩阵和 Bug 表单均已就绪。");

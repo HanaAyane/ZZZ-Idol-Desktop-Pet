@@ -10,7 +10,6 @@
 3. 在页面底部下载名称以 `AngelofDelusion-deskpet-windows-x64-` 开头的 Artifact。
 4. 解压后应包含：
    - `*-setup.exe`：NSIS 安装程序，作为日常测试的首选。
-   - `*.msi`：MSI 安装程序，用于企业安装和 MSI 专项验证。
    - `BUILD-INFO.txt`：commit、测试版本和 Actions 运行编号。
    - `SHA256SUMS.txt`：安装包校验值。
    - 本测试清单。
@@ -19,7 +18,7 @@
 可选校验，在解压目录打开 PowerShell：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\*.exe, .\*.msi
+Get-FileHash -Algorithm SHA256 .\*.exe
 Get-Content .\SHA256SUMS.txt
 ```
 
@@ -40,12 +39,12 @@ Get-Content .\SHA256SUMS.txt
 | CPU / GPU |  |
 | 显示器 | 单屏 / 双屏及分辨率 |
 | Windows 缩放 | 100% / 125% / 150% / 200% |
-| 安装包 | NSIS / MSI |
+| 安装包 | NSIS EXE |
 
 ## 3. 安装规则
 
 - 第一轮优先使用 NSIS `*-setup.exe`。
-- NSIS 与 MSI 不要同时安装；切换安装器前先卸载现有版本。
+- Windows 仅提供 NSIS EXE；若此前安装过旧版 MSI，请先卸载旧版再安装 EXE。
 - 测试包暂未签名，Windows SmartScreen 可能提示未知发布者。只运行从本私有仓库 Actions 下载且 SHA-256 匹配的安装包。
 - 正常覆盖测试使用更高的 `Test version`，不需要手动删除配置。
 - 配置通常位于 `%APPDATA%\com.hana.zzzidolpet\settings.json`。
@@ -181,7 +180,7 @@ Windows 日志中的 `desktop_pet::drag` 会记录每次拖拽的起止坐标和
 
 ## 12. 安装、升级与卸载
 
-NSIS 和 MSI 分开执行完整流程：
+使用 NSIS EXE 执行完整流程：
 
 | 编号 | 操作 | 预期 | 结果 |
 |---|---|---|---|
@@ -198,7 +197,7 @@ NSIS 和 MSI 分开执行完整流程：
 ```text
 Commit / Test version：
 Windows 版本与架构：
-安装包：NSIS / MSI
+安装包：NSIS EXE
 显示器与缩放：
 角色：
 
