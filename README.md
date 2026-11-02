@@ -39,8 +39,6 @@
 
 ## 下载安装
 
-顶部徽章自动显示所有 Releases 附件的累计下载次数与最新正式版的附件下载次数，更新有缓存延迟。统计包含 DMG、EXE、MSI 等上传附件；重复下载会累计，不代表独立用户数，也不包含 GitHub 自动生成的源码 ZIP/TAR 下载。
-
 Windows 与 macOS 最新版均为 **v0.1.3**，优化计时与设置界面，新增 Windows 签名更新并修复设置保存竞态。[查看更新说明](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/v0.1.3)。
 
 | 系统 | 下载 | 安装方式 |
