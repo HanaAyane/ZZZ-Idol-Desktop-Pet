@@ -183,6 +183,7 @@ export class PomodoroApp {
     if ((active ? s!.mode : this.mode) === "custom") { rail.hidden = true; rail.replaceChildren(); return; }
     rail.hidden = false;
     const total = Math.min(99, Math.max(1, Math.round(active ? s!.totalRounds : this.preferences().defaultRounds) || 1));
+    rail.style.setProperty("--rounds", String(total));
     const completed = active ? Math.min(s!.completedRounds, total) : 0;
     const current = active && s!.phase === "focus" ? completed : -1;
     if (rail.childElementCount !== total) rail.replaceChildren(...Array.from({ length: total }, () => document.createElement("i")));

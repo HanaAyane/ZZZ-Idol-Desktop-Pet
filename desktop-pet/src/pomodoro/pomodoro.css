@@ -257,13 +257,14 @@ body[data-window="pomodoro"] {
 .pomodoro-rail {
   display: flex;
   flex: 0 0 auto;
-  gap: 3px;
+  /* Dense groups keep every round visible within the fixed-size screen. */
+  gap: clamp(0px, calc(100% / var(--rounds, 2) / 3), 3px);
   height: 3px;
 }
 
 .pomodoro-rail i {
   flex: 1 1 0;
-  min-width: 2px;
+  min-width: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
   transition: background 0.24s ease, box-shadow 0.24s ease;

@@ -650,6 +650,7 @@ body[data-window="settings"] {
   gap: 10px;
 }
 
+.settings-action,
 .diagnostics-actions button,
 [data-check-updates] {
   min-height: 36px;
@@ -661,21 +662,34 @@ body[data-window="settings"] {
   cursor: pointer;
 }
 
+.settings-action:hover:not(:disabled),
 .diagnostics-actions button:hover:not(:disabled),
 [data-check-updates]:hover:not(:disabled) {
   border-color: rgba(245, 170, 199, 0.55);
   background: rgba(224, 118, 160, 0.22);
 }
 
+.settings-action:disabled,
 .diagnostics-actions button:disabled,
 [data-check-updates]:disabled {
   cursor: wait;
   opacity: 0.5;
 }
 
+.settings-action:focus-visible,
 [data-check-updates]:focus-visible {
   outline: 2px solid #ffc0d8;
   outline-offset: 3px;
+}
+
+.settings-action {
+  flex: 0 0 auto;
+  min-width: 112px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 .diagnostics-path {
@@ -869,8 +883,24 @@ body[data-window="settings"] {
   color: #78eba8;
 }
 
+.author-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0 20px;
+}
+
+.author-avatar {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid rgba(245, 170, 199, 0.28);
+  border-radius: 18px;
+}
+
 .author-name {
-  margin: 16px 0;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #ffe7f0;
@@ -912,6 +942,80 @@ body[data-window="settings"] {
   font-size: 12px;
   overflow-wrap: anywhere;
   user-select: text;
+}
+
+.credits-description {
+  margin: 0 0 18px;
+  color: #cfb3bf;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contributor-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(245, 170, 199, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 170, 205, 0.045);
+}
+
+.contributor-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contributor-avatar {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid rgba(245, 170, 199, 0.28);
+  border-radius: 14px;
+}
+
+.contributor-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #ffe7f0;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.contributor-name span {
+  color: #cfb3bf;
+  font-size: 12px;
+}
+
+.contributor-name:hover {
+  color: #ffc0d8;
+  text-decoration: underline;
+}
+
+.contributor-name:focus-visible {
+  outline: 2px solid #ffc0d8;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.contributors-thanks {
+  margin: 18px 0 0;
+  color: #cfb3bf;
+  font-size: 11px;
+  line-height: 1.7;
 }
 
 .settings-footer {
