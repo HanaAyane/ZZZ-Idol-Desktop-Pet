@@ -6,6 +6,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { version as previewVersion } from "../../package.json";
 import { checkForUpdates, RELEASES_URL } from "./updates";
 import { CHARACTERS } from "../characters";
+import { CONTRIBUTORS } from "./contributors";
 import { APP_SETTINGS_STATE, COORDINATION_STATE, listenAppEvent } from "../characters/events";
 import type { CharacterId } from "../characters/types";
 import type { CoordinationSnapshot } from "../pet/coordinationTypes";
@@ -30,6 +31,7 @@ import {
   type PetInstanceSettingsPatch,
 } from "./appSettings";
 
+const authorAvatar = new URL("../assets/contributors/hanaayane.png", import.meta.url).href;
 const settingsLogo = new URL("../assets/settings-logo.png", import.meta.url).href;
 const characterAvatars: Record<CharacterId, string> = {
   airui: new URL("../assets/character-avatars/airui.png", import.meta.url).href,
@@ -88,8 +90,8 @@ export class SettingsApp {
 
         <section class="settings-section" aria-labelledby="room-title">
           <div class="section-heading"><div><p class="eyebrow">LIVING SPACE</p><h2 id="room-title">妄想天使活动室</h2></div></div>
-          <div class="setting-list"><div class="setting-row"><span><strong>三个人的小小生活空间</strong><small>把桌宠拖进房间，一起漫步、坐沙发或躺坐垫；角色随房间同步缩放，拖动窗口边缘缩放至 20%，上沿切换昼夜</small></span><button type="button" data-open-room>打开活动室</button></div></div>
-          <div class="setting-list"><div class="setting-row"><span><strong>邀请角色</strong><small>也可以直接把桌宠拖进活动室；拖到家具上休息，拖出房间回到桌面</small></span><button type="button" data-room-invite>邀请三人入住</button></div></div>
+          <div class="setting-list"><div class="setting-row"><span><strong>三个人的小小生活空间</strong><small>把桌宠拖进房间，一起漫步、坐沙发或躺坐垫；角色随房间同步缩放，拖动窗口边缘缩放至 20%，上沿切换昼夜</small></span><button type="button" class="settings-action" data-open-room>打开活动室</button></div></div>
+          <div class="setting-list"><div class="setting-row"><span><strong>邀请角色</strong><small>也可以直接把桌宠拖进活动室；拖到家具上休息，拖出房间回到桌面</small></span><button type="button" class="settings-action" data-room-invite>邀请三人入住</button></div></div>
           <output data-room-error role="status"></output>
         </section>
 
@@ -168,13 +170,32 @@ export class SettingsApp {
         </section>
 
         <section class="settings-section" aria-labelledby="author-title">
-          <div class="section-heading"><div><p class="eyebrow">AUTHOR</p><h2 id="author-title">作者信息</h2></div></div>
-          <p class="author-name">HanaAyane</p>
+          <div class="section-heading"><div><p class="eyebrow">CREATOR · MAINTAINER</p><h2 id="author-title">项目作者</h2></div></div>
+          <div class="author-profile">
+            <img class="author-avatar" src="${authorAvatar}" alt="" width="64" height="64" loading="lazy" draggable="false">
+            <p class="author-name">HanaAyane</p>
+          </div>
           <nav class="author-links" aria-label="作者主页">
             <a href="https://space.bilibili.com/13745360" target="_blank" rel="noopener noreferrer">B 站主页 <span aria-hidden="true">↗</span></a>
             <a href="https://github.com/HanaAyane" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
           </nav>
           <output class="author-link-error" data-author-link-error role="status" aria-live="polite" hidden></output>
+        </section>
+
+        <section class="settings-section" aria-labelledby="contributors-title">
+          <div class="section-heading"><div><p class="eyebrow">CONTRIBUTORS</p><h2 id="contributors-title">开源贡献者</h2></div></div>
+          <p class="credits-description">感谢为项目修复问题、完善体验的开发者。</p>
+          <ul class="contributors-grid" aria-label="开源贡献者">
+            ${CONTRIBUTORS.map((contributor) => `
+              <li class="contributor-card">
+                <div class="contributor-heading">
+                  <img class="contributor-avatar" src="${contributor.avatar}" alt="" width="48" height="48" loading="lazy" draggable="false">
+                  <a class="contributor-name" href="https://github.com/${contributor.login}" target="_blank" rel="noopener noreferrer" aria-label="${contributor.login} 的 GitHub 主页">@${contributor.login}<span aria-hidden="true">↗</span></a>
+                </div>
+              </li>`).join("")}
+          </ul>
+          <p class="contributors-thanks">从一个人的小小创意，到大家共同完善的作品。感谢每一份贡献 ♡</p>
+          <output class="author-link-error" data-contributor-link-error role="status" aria-live="polite" hidden></output>
         </section>
 
         <footer class="settings-footer">
@@ -184,6 +205,8 @@ export class SettingsApp {
       </main>`;
 
     this.bindControls();
+    this.syncRangeFills();
+    this.syncSelects();
   }
 
   async mount(): Promise<void> {
@@ -239,12 +262,11 @@ export class SettingsApp {
       } catch (error) { output.textContent = String(error); }
       finally { button.disabled = false; }
     });
-    this.root.querySelectorAll<HTMLAnchorElement>(".author-links a").forEach((link) => {
+    this.root.querySelectorAll<HTMLAnchorElement>(".author-links a, .contributor-name").forEach((link) => {
       link.addEventListener("click", async (event) => {
         if (!window.__TAURI_INTERNALS__) return;
         event.preventDefault();
-        const status = this.requireElement<HTMLOutputElement>(link.hasAttribute("data-update-link")
-          ? "[data-update-link-error]" : "[data-author-link-error]");
+        const status = link.closest("section")!.querySelector<HTMLOutputElement>(".author-link-error")!;
         status.hidden = true;
         try {
           await openUrl(link.href);
@@ -270,6 +292,7 @@ export class SettingsApp {
       input.addEventListener("input", () => {
         const output = this.root.querySelector<HTMLOutputElement>(`[data-pet-scale-output='${input.dataset.petScale}']`);
         if (output) output.textContent = `${input.value}%`;
+        this.syncRangeFill(input);
       });
       input.addEventListener("change", () => {
         void this.savePetSettings(input.dataset.petScale as CharacterId, { scale: Number(input.value) / 100 });
@@ -282,11 +305,17 @@ export class SettingsApp {
       input.addEventListener("input", () => {
         const output = this.root.querySelector<HTMLOutputElement>(`[data-output='${input.dataset.setting}']`);
         if (output) output.textContent = `${input.value}%`;
+        this.syncRangeFill(input);
         this.queueSave({ [input.dataset.setting!]: Number(input.value) / 100 } as AppSettingsPatch);
       });
     });
-    this.root.querySelectorAll<HTMLSelectElement>("select[data-setting]").forEach((select) => {
-      select.addEventListener("change", () => this.queueSave({ [select.dataset.setting!]: select.value } as AppSettingsPatch, 0));
+    this.bindSelects();
+    this.root.querySelectorAll<HTMLElement>("[data-pet-card]").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if ((event.target as HTMLElement).closest("label, input, button, a")) return;
+        const input = card.querySelector<HTMLInputElement>("[data-pet-visible]");
+        if (input && !input.disabled) input.click();
+      });
     });
     this.root.querySelectorAll<HTMLInputElement>("input[data-coordination-setting]").forEach((input) => {
       input.addEventListener("change", () => {
@@ -456,6 +485,108 @@ export class SettingsApp {
       if (control) control.checked = Boolean(value);
     }
     this.renderCoordinationState(this.coordinationSnapshot);
+    this.syncRangeFills();
+    this.syncSelects();
+  }
+
+  /** 把滑块的已填充比例同步给样式，用于渐变着色。 */
+  private syncRangeFill(input: HTMLInputElement): void {
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const value = Number(input.value);
+    const ratio = Number.isFinite(value) && max > min ? (value - min) / (max - min) : 0;
+    input.style.setProperty("--fill", `${(Math.min(1, Math.max(0, ratio)) * 100).toFixed(2)}%`);
+  }
+
+  private syncRangeFills(): void {
+    this.root.querySelectorAll<HTMLInputElement>("input[type='range']").forEach((input) => this.syncRangeFill(input));
+  }
+
+  /** 自绘下拉框：按钮 + 选项列表，支持点击外部、Esc、方向键与回车选择。 */
+  private bindSelects(): void {
+    document.addEventListener("click", () => this.closeSelects());
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) {
+      const button = control.querySelector<HTMLButtonElement>(".settings-select-button");
+      const list = control.querySelector<HTMLUListElement>(".settings-select-list");
+      const input = control.querySelector<HTMLInputElement>("input[data-setting]");
+      if (!button || !list || !input) continue;
+      const options = Array.from(list.querySelectorAll<HTMLLIElement>("[role='option']"));
+      const close = (focusButton = false): void => {
+        list.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+        if (focusButton) button.focus();
+      };
+      const open = (direction: 1 | -1): void => {
+        this.closeSelects(control);
+        list.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+        const index = options.findIndex((option) => option.getAttribute("aria-selected") === "true");
+        const target = direction === 1
+          ? options[index === -1 ? 0 : index]
+          : options[index === -1 ? options.length - 1 : index];
+        target?.focus();
+      };
+      const choose = (option: HTMLLIElement): void => {
+        const value = option.dataset.value ?? "";
+        close(true);
+        if (input.value === value) return;
+        input.value = value;
+        this.syncSelect(control);
+        this.queueSave({ [input.dataset.setting!]: value } as AppSettingsPatch, 0);
+      };
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (list.hidden) open(1); else close();
+      });
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          open(1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          open(-1);
+        } else if (event.key === "Escape") {
+          close();
+        }
+      });
+      options.forEach((option, index) => {
+        option.addEventListener("click", (event) => { event.stopPropagation(); choose(option); });
+        option.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowDown") { event.preventDefault(); options[Math.min(options.length - 1, index + 1)]?.focus(); }
+          else if (event.key === "ArrowUp") { event.preventDefault(); options[Math.max(0, index - 1)]?.focus(); }
+          else if (event.key === "Home") { event.preventDefault(); options[0]?.focus(); }
+          else if (event.key === "End") { event.preventDefault(); options[options.length - 1]?.focus(); }
+          else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(option); }
+          else if (event.key === "Escape") { event.preventDefault(); close(true); }
+          else if (event.key === "Tab") close();
+        });
+      });
+    }
+  }
+
+  private closeSelects(except?: HTMLElement): void {
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) {
+      if (control === except) continue;
+      const list = control.querySelector<HTMLUListElement>(".settings-select-list");
+      if (list && !list.hidden) {
+        list.hidden = true;
+        control.querySelector<HTMLButtonElement>(".settings-select-button")?.setAttribute("aria-expanded", "false");
+      }
+    }
+  }
+
+  private syncSelect(control: HTMLElement): void {
+    const input = control.querySelector<HTMLInputElement>("input[data-setting]");
+    if (!input) return;
+    const options = Array.from(control.querySelectorAll<HTMLLIElement>("[role='option']"));
+    const selected = options.find((option) => option.dataset.value === input.value) ?? options[0];
+    for (const option of options) option.setAttribute("aria-selected", String(option === selected));
+    const label = control.querySelector<HTMLElement>("[data-select-label]");
+    if (label) label.textContent = selected?.textContent ?? "";
+  }
+
+  private syncSelects(): void {
+    for (const control of Array.from(this.root.querySelectorAll<HTMLElement>("[data-select]"))) this.syncSelect(control);
   }
 
   private renderCoordinationState(snapshot: CoordinationSnapshot | null): void {
@@ -505,7 +636,12 @@ export class SettingsApp {
   }
 
   private selectRow(key: keyof AppSettings, title: string, description: string, options: string[][]): string {
-    return `<label class="setting-row"><span><strong>${title}</strong><small>${description}</small></span><select data-setting="${key}">${options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label>`;
+    const [value, label] = options[0];
+    return `<div class="setting-row"><span><strong id="${key}-title">${title}</strong><small id="${key}-description">${description}</small></span><div class="settings-select" data-select="${key}">
+      <button type="button" class="settings-select-button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="${key}-title ${key}-value" aria-describedby="${key}-description" aria-controls="${key}-options"><span id="${key}-value" data-select-label>${label}</span></button>
+      <ul id="${key}-options" class="settings-select-list" role="listbox" aria-labelledby="${key}-title" hidden>${options.map(([optionValue, optionLabel]) => `<li role="option" tabindex="-1" data-value="${optionValue}" aria-selected="false">${optionLabel}</li>`).join("")}</ul>
+      <input type="hidden" data-setting="${key}" value="${value}">
+    </div></div>`;
   }
 
   private requireElement<T extends Element = HTMLElement>(selector: string): T {

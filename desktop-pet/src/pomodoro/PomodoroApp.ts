@@ -20,17 +20,25 @@ export class PomodoroApp {
   private draftRevision = 0;
   constructor(private readonly root: HTMLElement) {
     root.innerHTML = `
-      <main class="pomodoro-shell" aria-label="专注计时">
+      <main class="pomodoro-shell" aria-label="专注计时" data-state="idle">
         <img class="pomodoro-frame" src="${background}" alt="" draggable="false">
+        <div class="pomodoro-screen-glow" aria-hidden="true"></div>
         <div class="pomodoro-drag" title="拖动计时窗口" aria-hidden="true"></div>
         <section class="pomodoro-screen">
           <div class="pomodoro-modes" role="group" aria-label="计时模式">
             <button data-command="mode-pomodoro" aria-pressed="true">番茄钟</button><button data-command="mode-custom" aria-pressed="false">自定义计时</button>
           </div>
-          <div class="pomodoro-phase"><span data-phase role="status">准备专注</span><span data-rounds></span></div>
+          <div class="pomodoro-phase">
+            <span class="pomodoro-phase-chip"><i class="pomodoro-led" aria-hidden="true"></i><span data-phase role="status">准备专注</span></span>
+            <span class="pomodoro-rounds" data-rounds></span>
+          </div>
+          <div class="pomodoro-rail" data-rail aria-hidden="true"></div>
           <div data-main>
             <div class="pomodoro-time" data-time aria-label="剩余时间">25:00</div>
-            <progress data-progress max="1" value="0" aria-label="计时进度"></progress>
+            <div class="pomodoro-progress">
+              <progress data-progress max="1" value="0" aria-label="计时进度"></progress>
+              <div class="pomodoro-ticks" data-ticks aria-hidden="true"></div>
+            </div>
             <div data-setup>
               <div class="pomodoro-inputs" data-inputs>
                 <label>番茄个数<input data-pref="defaultRounds" type="number" min="1" max="99" step="1" value="2"></label>
@@ -52,27 +60,35 @@ export class PomodoroApp {
             <div class="pomodoro-confirm" data-confirm hidden><span>结束本次计时？</span><button data-command="confirm">结束</button><button data-command="cancel">返回</button></div>
           </div>
           <div class="pomodoro-reminders" data-reminders hidden>
-            <p class="pomodoro-help">从本次开始累计，暂停不计入<br>时间到点响铃，计时继续</p>
-            <div class="pomodoro-chips" data-reminder-list aria-label="提醒时间点"></div>
-            <form class="pomodoro-reminder-add" data-reminder-form>
-              <label>第 <input data-reminder-input aria-label="新增提醒的分钟数" type="number" min="1" max="119" step="1" placeholder="分钟"> 分钟</label>
-              <button type="submit">添加</button>
-            </form>
-            <p class="pomodoro-help" data-reminder-help></p>
-            <button data-command="done-reminders">完成</button>
+            <div class="pomodoro-panel">
+              <div class="pomodoro-panel-head"><span>提醒时间点</span><span data-reminder-count-page>2 个</span></div>
+              <p class="pomodoro-help">从本次开始累计，暂停不计入。时间到点响铃，计时继续。</p>
+              <div class="pomodoro-chips" data-reminder-list aria-label="提醒时间点"></div>
+              <form class="pomodoro-reminder-add" data-reminder-form>
+                <label>第 <input data-reminder-input aria-label="新增提醒的分钟数" type="number" min="1" max="119" step="1" placeholder="分钟"> 分钟</label>
+                <button type="submit">添加</button>
+              </form>
+              <p class="pomodoro-help" data-reminder-help></p>
+            </div>
+            <button class="pomodoro-primary" data-command="done-reminders">完成</button>
           </div>
           <div class="pomodoro-sounds" data-sounds hidden>
-            <label class="pomodoro-sound-toggle"><span>声音提醒</span><input data-pref="soundEnabled" type="checkbox" checked></label>
-            <label class="pomodoro-volume">音量 <output data-volume>60%</output><input data-pref="volume" type="range" min="0" max="100" value="60"></label>
+            <div class="pomodoro-panel">
+              <label class="pomodoro-sound-toggle"><span>声音提醒</span><input class="pomodoro-switch" data-pref="soundEnabled" type="checkbox" checked></label>
+              <label class="pomodoro-volume"><span class="pomodoro-volume-head">音量 <output data-volume>60%</output></span><input data-pref="volume" type="range" min="0" max="100" value="60"></label>
+            </div>
           </div>
           <p class="pomodoro-notice" data-notice role="status"></p>
         </section>
         <footer class="pomodoro-footer"><button data-command="sounds">声音设置</button><span>桌面置顶 · 专注陪伴</span><button data-command="close" title="关闭计时窗口，计时继续">关闭</button></footer>
       </main>`;
+    this.installSteppers();
     root.querySelector(".pomodoro-drag")!.addEventListener("pointerdown", event => {
       if ((event as PointerEvent).button === 0 && native()) void getCurrentWindow().startDragging().catch(e => this.error(e));
     });
     root.addEventListener("click", event => {
+      const stepper = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-step]");
+      if (stepper) { this.step(stepper); return; }
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-command]");
       if (button && !button.disabled) void this.command(button.dataset.command!);
     });
@@ -82,6 +98,10 @@ export class PomodoroApp {
     });
     this.element<HTMLFormElement>("[data-reminder-form]").addEventListener("submit", event => { event.preventDefault(); this.addReminder(); });
     this.renderReminders();
+    this.renderRail();
+    this.renderTicks();
+    this.updateDraft();
+    this.layout();
   }
   async mount(): Promise<void> {
     if (!native()) { this.error("界面预览：请在桌宠应用中开始计时。"); return; }
@@ -93,6 +113,37 @@ export class PomodoroApp {
     } catch (e) { this.error(e); }
   }
   dispose(): void { this.disposed = true; this.unlisten?.(); }
+  /** 给数字输入框包一层，换成主题化的上下按钮（隐藏系统原生微调箭头）。 */
+  private installSteppers(): void {
+    const names: Record<string, string> = { defaultRounds: "番茄个数", focusMinutes: "专注分钟", breakMinutes: "休息分钟", customMinutes: "总时长" };
+    for (const input of this.root.querySelectorAll<HTMLInputElement>('input[type="number"]')) {
+      const name = names[input.dataset.pref ?? ""] ?? "提醒分钟";
+      const wrapper = document.createElement("span");
+      wrapper.className = "pomodoro-number";
+      input.replaceWith(wrapper);
+      wrapper.append(input);
+      const stepper = document.createElement("span");
+      stepper.className = "pomodoro-stepper";
+      for (const [direction, label] of [["up", `增加${name}`], ["down", `减少${name}`]] as const) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.tabIndex = -1;
+        button.dataset.step = direction;
+        button.setAttribute("aria-label", label);
+        stepper.append(button);
+      }
+      wrapper.append(stepper);
+    }
+  }
+  private step(stepper: HTMLButtonElement): void {
+    if (stepper.disabled) return;
+    const input = stepper.closest(".pomodoro-number")?.querySelector<HTMLInputElement>('input[type="number"]');
+    if (!input || input.disabled) return;
+    try { if (stepper.dataset.step === "up") input.stepUp(); else input.stepDown(); } catch { return; }
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.focus();
+  }
   private element<T extends HTMLElement = HTMLElement>(selector: string): T { return this.root.querySelector<T>(selector)!; }
   private preferences(): Preferences {
     const input = (key: string) => this.element<HTMLInputElement>(`[data-pref="${key}"]`);
@@ -109,6 +160,8 @@ export class PomodoroApp {
     const p = this.preferences();
     const error = preferencesError(p);
     this.element("[data-volume]").textContent = `${p.volume}%`;
+    const volumeFill = Number.isFinite(p.volume) ? Math.min(100, Math.max(0, p.volume)) : 0;
+    this.element<HTMLInputElement>('[data-pref="volume"]').style.setProperty("--fill", `${volumeFill}%`);
     if (!this.snapshot || !isActive(this.snapshot)) {
       const points = p.reminderMinutes.length ? `第 ${p.reminderMinutes.join("、")} 分钟提醒` : "仅结束时提醒";
       this.element("[data-summary]").textContent = error || (p.mode === "custom" ? points : `${p.defaultRounds} 个番茄钟 · 预计 ${plannedMinutes(p)} 分钟`);
@@ -116,9 +169,44 @@ export class PomodoroApp {
       this.element("[data-phase]").textContent = p.mode === "custom" ? "准备计时" : "准备专注";
       this.element<HTMLProgressElement>("[data-progress]").value = 0;
     }
-    this.element("[data-reminder-count]").textContent = `${p.reminderMinutes.length} 个`;
+    const count = `${p.reminderMinutes.length} 个`;
+    this.element("[data-reminder-count]").textContent = count;
+    this.element("[data-reminder-count-page]").textContent = count;
     this.element<HTMLInputElement>("[data-reminder-input]").max = String(p.customMinutes - 1);
     this.element("[data-reminder-help]").textContent = Number.isInteger(p.customMinutes) ? `第 ${p.customMinutes} 分钟自动结束并提醒` : "请先设置总时长";
+  }
+  /** 轮次轨道：番茄钟模式下每个分段代表一个番茄。 */
+  private renderRail(): void {
+    const rail = this.element("[data-rail]");
+    const s = this.snapshot;
+    const active = Boolean(s && isActive(s));
+    if ((active ? s!.mode : this.mode) === "custom") { rail.hidden = true; rail.replaceChildren(); return; }
+    rail.hidden = false;
+    const total = Math.min(99, Math.max(1, Math.round(active ? s!.totalRounds : this.preferences().defaultRounds) || 1));
+    rail.style.setProperty("--rounds", String(total));
+    const completed = active ? Math.min(s!.completedRounds, total) : 0;
+    const current = active && s!.phase === "focus" ? completed : -1;
+    if (rail.childElementCount !== total) rail.replaceChildren(...Array.from({ length: total }, () => document.createElement("i")));
+    Array.from(rail.children).forEach((segment, index) => {
+      segment.setAttribute("data-done", String(index < completed));
+      segment.setAttribute("data-current", String(index === current));
+    });
+  }
+  /** 自定义计时模式下，在进度条上标出提醒时间点。 */
+  private renderTicks(): void {
+    const ticks = this.element("[data-ticks]");
+    const s = this.snapshot;
+    const active = Boolean(s && isActive(s));
+    const custom = (active ? s!.mode : this.mode) === "custom";
+    ticks.replaceChildren();
+    if (!custom) return;
+    const totalMinutes = active ? Math.max(1, s!.durationMs / 60_000) : this.preferences().customMinutes;
+    for (const minute of active ? s!.reminderMinutes : this.reminders) {
+      if (!Number.isFinite(minute) || minute <= 0 || minute >= totalMinutes) continue;
+      const tick = document.createElement("i");
+      tick.style.left = `${(minute / totalMinutes) * 100}%`;
+      ticks.append(tick);
+    }
   }
   private renderReminders(): void {
     const list = this.element("[data-reminder-list]");
@@ -220,6 +308,12 @@ export class PomodoroApp {
       .forEach(b => { b.disabled = this.busy || active; });
     for (const mode of ["pomodoro", "custom"]) this.element(`[data-command='mode-${mode}']`).setAttribute("aria-pressed", String(mode === (custom ? "custom" : "pomodoro")));
     if (s && s.totalRounds >= 99) this.element<HTMLButtonElement>("[data-command='add']").disabled = true;
+    const shell = this.element<HTMLElement>(".pomodoro-shell");
+    shell.dataset.state = s ? s.phase : "idle";
+    shell.dataset.paused = String(Boolean(active && s!.paused));
+    shell.dataset.running = String(Boolean(active && !s!.paused));
+    this.renderRail();
+    this.renderTicks();
   }
   private render(s: PomodoroSnapshot): void {
     if (this.disposed || (this.snapshot && s.revision < this.snapshot.revision)) return;

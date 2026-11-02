@@ -1,48 +1,876 @@
-html[data-window="pomodoro"], body[data-window="pomodoro"] { overflow: hidden; background: transparent !important; }
-.pomodoro-shell { position: relative; width: min(440px, 100vw, 100vh); height: min(440px, 100vw, 100vh); margin: auto; color: #ffd0e5; font-family: "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", sans-serif; user-select: none; -webkit-user-select: none; }
-.pomodoro-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.pomodoro-drag { position: absolute; left: 16%; top: 1%; width: 55%; height: 12%; cursor: grab; }
-.pomodoro-drag:active { cursor: grabbing; }
-.pomodoro-screen { position: absolute; left: 12%; top: 14%; width: 61%; height: 56%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cb78a1 transparent; display: flex; flex-direction: column; gap: 5px; }
-.pomodoro-header { display: flex; justify-content: space-between; align-items: center; letter-spacing: 1.5px; font-size: 9px; color: #f3a9ca; }
-.pomodoro-shell button { border: 1px solid #cb78a1; background: #74324f; color: #ffe3ef; border-radius: 8px; padding: 6px 9px; font: inherit; font-size: 11px; cursor: pointer; transition: background .15s; white-space: nowrap; }
-.pomodoro-shell button:hover { background: #944567; }
-.pomodoro-shell button:active { background: #aa5479; }
-.pomodoro-shell button:focus-visible, .pomodoro-shell input:focus-visible { outline: 2px solid #ffd0e5; outline-offset: 2px; }
-.pomodoro-shell button:disabled { opacity: .5; cursor: default; }
-.pomodoro-phase { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #ffc5df; }
-.pomodoro-time { font-size: 44px; line-height: 1.2; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; text-align: center; color: #ffd0e5; text-shadow: 0 2px 15px #ed79b225; }
-.pomodoro-shell progress { appearance: none; display: block; width: 100%; height: 5px; border: none; border-radius: 5px; overflow: hidden; background: #523e60; margin: 5px 0 10px; }
-.pomodoro-shell progress::-webkit-progress-bar { background: #523e60; }
-.pomodoro-shell progress::-webkit-progress-value { background: #f58abc; border-radius: 5px; }
-.pomodoro-shell progress::-moz-progress-bar { background: #f58abc; }
-.pomodoro-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.pomodoro-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #f7b7d2; }
-.pomodoro-inputs input { width: 100%; min-width: 0; height: 29px; background: #392d4c; border: 1px solid #95627f; border-radius: 6px; color: #ffd0e5; text-align: center; font: inherit; font-size: 14px; }
-.pomodoro-summary { margin: 7px 0; font-size: 10px; line-height: 1.5; text-align: center; color: #f7b7d2; white-space: pre-line; max-height: 45px; overflow-y: auto; }
-.pomodoro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-.pomodoro-shell .pomodoro-primary { background: #a24671; font-weight: 700; flex: 1; }
-.pomodoro-confirm { display: flex; gap: 5px; align-items: center; font-size: 11px; }
-.pomodoro-notice { margin: 0; font-size: 10px; line-height: 1.45; color: #ffb8d8; overflow: auto; max-height: 40px; }
-.pomodoro-footer { position: absolute; left: 12%; top: 81%; width: 62%; height: 7%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.pomodoro-footer span { color: #57324a; font-size: 10px; font-weight: 600; }
-.pomodoro-sounds { display: flex; flex-direction: column; gap: 20px; padding-top: 15px; font-size: 12px; }
-.pomodoro-sound-toggle { display: flex; justify-content: space-between; align-items: center; }
-.pomodoro-shell input[type="checkbox"], .pomodoro-shell input[type="range"] { accent-color: #f58abc; }
-.pomodoro-volume { display: flex; flex-wrap: wrap; gap: 5px; justify-content: space-between; }
-.pomodoro-volume input { width: 100%; }
-.pomodoro-shell [hidden] { display: none !important; }
-.pomodoro-modes { display: flex; gap: 4px; flex-shrink: 0; }
-.pomodoro-modes button { flex: 1; padding: 4px 8px; background: #392d4c; }
-.pomodoro-modes button[aria-pressed="true"] { background: #a24671; border-color: #f58abc; font-weight: 700; }
-.pomodoro-modes button:disabled { opacity: .8; }
-.pomodoro-custom { display: flex; align-items: end; gap: 10px; }
-.pomodoro-custom label { display: flex; flex-direction: column; gap: 3px; font-size: 10px; }
-.pomodoro-custom input, .pomodoro-reminder-add input { box-sizing: border-box; width: 76px; height: 29px; background: #392d4c; border: 1px solid #95627f; border-radius: 6px; color: #ffd0e5; text-align: center; font: inherit; font-size: 14px; }
-.pomodoro-custom button { flex: 1; height: 29px; }
-.pomodoro-reminders { display: flex; flex-direction: column; gap: 9px; }
-.pomodoro-help { margin: 0; font-size: 10px; line-height: 1.5; color: #f7b7d2; }
-.pomodoro-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 68px; overflow-y: auto; font-size: 10px; }
-.pomodoro-chips button { padding: 4px 7px; }
-.pomodoro-reminder-add { display: flex; gap: 8px; justify-content: space-between; align-items: center; font-size: 11px; }
-.pomodoro-reminder-add button { flex: 1; }
+/* 番茄钟窗口样式。
+   沿用项目「妄想天使」的粉 / 梅 / 薄荷配色与深色玻璃面板语言，
+   在 ANGELS 机身屏幕上重绘计时 UI；屏幕、机身铭牌等区域与原背景图对齐。 */
+html[data-window="pomodoro"],
+body[data-window="pomodoro"] {
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.pomodoro-shell {
+  --pink-100: #ffd0e5;
+  --pink-200: #f7b3d2;
+  --pink-300: #f58abc;
+  --pink-400: #e985b3;
+  --mint: #6fe0cb;
+  --mint-ink: #2f4a44;
+  --text: #ffe7f2;
+  --muted: #bcafd4;
+  --muted-soft: #a99ec4;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --well: rgba(9, 11, 26, 0.6);
+  --panel: rgba(255, 255, 255, 0.05);
+  position: relative;
+  width: min(440px, 100vw, 100vh);
+  height: min(440px, 100vw, 100vh);
+  margin: auto;
+  color: var(--text);
+  font-family: Inter, "SF Pro Display", "PingFang SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pomodoro-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.pomodoro-drag {
+  position: absolute;
+  left: 14%;
+  top: 1%;
+  width: 58%;
+  height: 11%;
+  z-index: 4;
+  cursor: grab;
+}
+
+.pomodoro-drag:active {
+  cursor: grabbing;
+}
+
+/* 屏幕光效层：与背景图的深蓝屏幕严格对齐，负责粉色 / 薄荷辉光与内凹阴影。 */
+.pomodoro-screen-glow {
+  position: absolute;
+  left: 9.7%;
+  top: 10.05%;
+  width: 66.9%;
+  height: 59.4%;
+  z-index: 1;
+  border-radius: 4px;
+  pointer-events: none;
+  background:
+    linear-gradient(104deg, rgba(255, 255, 255, 0.07) 0 16%, transparent 42%),
+    radial-gradient(128% 98% at 104% -12%, rgba(214, 106, 156, 0.34), transparent 56%),
+    radial-gradient(118% 88% at -12% 106%, rgba(89, 220, 197, 0.18), transparent 58%),
+    linear-gradient(168deg, rgba(35, 38, 69, 0.35), rgba(20, 22, 40, 0.4));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 10px 26px rgba(4, 6, 20, 0.5),
+    inset 0 -8px 20px rgba(4, 6, 20, 0.42);
+  transition: opacity 0.6s ease;
+}
+
+.pomodoro-shell[data-running="true"] .pomodoro-screen-glow {
+  animation: pomodoro-breathe 7s ease-in-out infinite;
+}
+
+.pomodoro-screen {
+  position: absolute;
+  left: 10.6%;
+  top: 11.5%;
+  width: 65.2%;
+  height: 57.1%;
+  z-index: 2;
+  padding: 11px 12px 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 171, 200, 0.45) transparent;
+}
+
+.pomodoro-screen::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pomodoro-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pomodoro-screen::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(243, 171, 200, 0.4);
+}
+
+.pomodoro-shell button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffe1ee;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.14s ease;
+}
+
+.pomodoro-shell button:hover:not(:disabled) {
+  border-color: rgba(245, 138, 188, 0.5);
+  background: rgba(245, 138, 188, 0.18);
+}
+
+.pomodoro-shell button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.pomodoro-shell button:focus-visible,
+.pomodoro-shell input:focus-visible {
+  outline: 2px solid #ffc0d8;
+  outline-offset: 2px;
+}
+
+.pomodoro-shell button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* 模式切换：胶囊分段控件 */
+.pomodoro-modes {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.pomodoro-modes button {
+  flex: 1;
+  padding: 4px 8px;
+  border-color: #cb78a1;
+  border-radius: 8px;
+  background: #392d4c;
+  color: #ffe3ef;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.pomodoro-modes button:hover:not([aria-pressed="true"]):not(:disabled) {
+  border-color: #cb78a1;
+  background: #944567;
+  color: #ffe3ef;
+}
+
+.pomodoro-modes button[aria-pressed="true"] {
+  border-color: #f58abc;
+  background: #a24671;
+  color: #ffe3ef;
+  font-weight: 700;
+}
+
+.pomodoro-modes button:disabled {
+  opacity: 0.8;
+}
+
+/* 阶段行：状态灯 + 轮次 */
+.pomodoro-phase {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pomodoro-phase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px 2px 7px;
+  border-radius: 999px;
+  background: rgba(233, 133, 179, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(245, 138, 188, 0.32);
+  color: var(--pink-100);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+.pomodoro-led {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pink-300);
+  box-shadow: 0 0 7px rgba(245, 138, 188, 0.85);
+}
+
+.pomodoro-rounds {
+  color: var(--muted-soft);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-shell[data-state="break"] .pomodoro-phase-chip {
+  background: rgba(89, 220, 197, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(111, 224, 203, 0.36);
+  color: #d8fff7;
+}
+
+.pomodoro-shell[data-state="break"] .pomodoro-led {
+  background: var(--mint);
+  box-shadow: 0 0 7px rgba(111, 224, 203, 0.85);
+}
+
+.pomodoro-shell[data-state="completed"] .pomodoro-phase-chip,
+.pomodoro-shell[data-state="stopped"] .pomodoro-phase-chip {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  color: #e6dcf3;
+}
+
+.pomodoro-shell[data-state="completed"] .pomodoro-led,
+.pomodoro-shell[data-state="stopped"] .pomodoro-led,
+.pomodoro-shell[data-paused="true"] .pomodoro-led {
+  background: #cfc2e0;
+  box-shadow: none;
+}
+
+.pomodoro-shell[data-running="true"] .pomodoro-led {
+  animation: pomodoro-pulse 2.4s ease-in-out infinite;
+}
+
+/* 轮次轨道：每个分段代表一个番茄 */
+.pomodoro-rail {
+  display: flex;
+  flex: 0 0 auto;
+  /* Dense groups keep every round visible within the fixed-size screen. */
+  gap: clamp(0px, calc(100% / var(--rounds, 2) / 3), 3px);
+  height: 3px;
+}
+
+.pomodoro-rail i {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background 0.24s ease, box-shadow 0.24s ease;
+}
+
+.pomodoro-rail i[data-current="true"] {
+  background: rgba(245, 138, 188, 0.5);
+}
+
+.pomodoro-rail i[data-done="true"] {
+  background: linear-gradient(90deg, #c06292, #f58abc);
+  box-shadow: 0 0 6px rgba(245, 138, 188, 0.5);
+}
+
+.pomodoro-screen [data-main] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 时间与进度 */
+.pomodoro-time {
+  padding-top: 1px;
+  background: linear-gradient(180deg, #ffffff 8%, var(--pink-100) 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(245, 138, 188, 0.3));
+  font-size: 42px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1.06;
+  text-align: center;
+}
+
+.pomodoro-progress {
+  position: relative;
+  height: 5px;
+  margin: 1px 0;
+}
+
+.pomodoro-shell progress {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(10, 12, 28, 0.72);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.pomodoro-shell progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.pomodoro-shell progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #bb5c8c, #f58abc 62%, #ffd0e5);
+  box-shadow: 0 0 10px rgba(245, 138, 188, 0.5);
+  transition: width 0.3s ease;
+}
+
+.pomodoro-shell progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #bb5c8c, #f58abc 62%, #ffd0e5);
+}
+
+.pomodoro-shell[data-state="break"] progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #3f9e93, #6fe0cb 65%, #c8fff3);
+  box-shadow: 0 0 10px rgba(111, 224, 203, 0.45);
+}
+
+.pomodoro-shell[data-state="break"] progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #3f9e93, #6fe0cb 65%, #c8fff3);
+}
+
+.pomodoro-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pomodoro-ticks i {
+  position: absolute;
+  top: -2px;
+  width: 1px;
+  height: 9px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.42);
+  transform: translateX(-50%);
+}
+
+/* 参数输入 */
+.pomodoro-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pomodoro-inputs label,
+.pomodoro-custom label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted-soft);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.pomodoro-inputs input,
+.pomodoro-custom input,
+.pomodoro-reminder-add input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 3px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--well);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  color: #ffeaf4;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color-scheme: dark;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.pomodoro-inputs input:hover,
+.pomodoro-custom input:hover,
+.pomodoro-reminder-add input:hover {
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.pomodoro-inputs input:focus,
+.pomodoro-custom input:focus,
+.pomodoro-reminder-add input:focus {
+  outline: none;
+  border-color: var(--pink-300);
+  background: rgba(12, 14, 32, 0.78);
+  box-shadow: 0 0 0 3px rgba(245, 138, 188, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 数字输入：隐藏系统原生微调箭头，换成主题化的上下按钮 */
+.pomodoro-number {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.pomodoro-number > input {
+  width: 100%;
+  padding: 0 13px;
+  -moz-appearance: textfield;
+}
+
+.pomodoro-number > input::-webkit-outer-spin-button,
+.pomodoro-number > input::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pomodoro-stepper {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  bottom: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 11px;
+}
+
+.pomodoro-stepper button {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.pomodoro-stepper button::before {
+  content: "";
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+.pomodoro-stepper button[data-step="up"]::before {
+  border-bottom: 5px solid #ffd9e9;
+}
+
+.pomodoro-stepper button[data-step="down"]::before {
+  border-top: 5px solid #ffd9e9;
+}
+
+.pomodoro-stepper button:hover:not(:disabled) {
+  background: rgba(245, 138, 188, 0.55);
+  border-color: transparent;
+}
+
+.pomodoro-stepper button[data-step="up"]:hover:not(:disabled)::before {
+  border-bottom-color: #ffffff;
+}
+
+.pomodoro-stepper button[data-step="down"]:hover:not(:disabled)::before {
+  border-top-color: #ffffff;
+}
+
+.pomodoro-stepper button:active:not(:disabled) {
+  background: rgba(245, 138, 188, 0.85);
+  transform: none;
+}
+
+.pomodoro-stepper button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pomodoro-custom {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.pomodoro-custom .pomodoro-number {
+  width: 74px;
+}
+
+.pomodoro-custom > button {
+  flex: 1;
+  height: 26px;
+  padding: 0 8px;
+}
+
+.pomodoro-summary {
+  margin: 0;
+  max-height: 32px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
+  white-space: pre-line;
+}
+
+/* 主操作 */
+.pomodoro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pomodoro-shell .pomodoro-primary {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid #cb78a1;
+  border-radius: 8px;
+  background: #a24671;
+  color: #ffe3ef;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.pomodoro-shell .pomodoro-primary:hover:not(:disabled) {
+  border-color: #cb78a1;
+  background: #944567;
+}
+
+.pomodoro-shell .pomodoro-primary:active:not(:disabled) {
+  background: #aa5479;
+  transform: none;
+}
+
+.pomodoro-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--text);
+  font-size: 10px;
+}
+
+.pomodoro-confirm [data-command="confirm"] {
+  border-color: rgba(255, 145, 164, 0.55);
+  background: rgba(255, 105, 129, 0.16);
+  color: #ffd7df;
+}
+
+.pomodoro-confirm [data-command="confirm"]:hover:not(:disabled) {
+  border-color: rgba(255, 145, 164, 0.8);
+  background: rgba(255, 105, 129, 0.26);
+}
+
+.pomodoro-notice {
+  margin: 0;
+  max-height: 28px;
+  overflow-y: auto;
+  color: #ffc0d6;
+  font-size: 9.5px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.pomodoro-notice:empty {
+  display: none;
+}
+
+/* 子页面通用面板 */
+.pomodoro-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+
+.pomodoro-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--pink-200);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.pomodoro-panel-head span:last-child {
+  color: var(--muted-soft);
+  letter-spacing: 0.08em;
+}
+
+.pomodoro-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+
+.pomodoro-reminders {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.pomodoro-reminders .pomodoro-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 171, 200, 0.4) transparent;
+}
+
+.pomodoro-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 38px;
+  overflow-y: auto;
+  font-size: 9.5px;
+}
+
+.pomodoro-chips button {
+  padding: 3px 7px;
+  border-color: rgba(245, 138, 188, 0.36);
+  border-radius: 999px;
+  background: rgba(245, 138, 188, 0.14);
+  color: #ffd9e9;
+  font-size: 9.5px;
+}
+
+.pomodoro-chips button:hover:not(:disabled) {
+  border-color: rgba(255, 145, 164, 0.65);
+  background: rgba(255, 105, 129, 0.24);
+  color: #ffe6ec;
+}
+
+.pomodoro-reminder-add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.pomodoro-reminder-add label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.pomodoro-reminder-add .pomodoro-number {
+  width: 62px;
+}
+
+.pomodoro-reminder-add .pomodoro-stepper {
+  top: 2px;
+  bottom: 2px;
+}
+
+.pomodoro-reminder-add input {
+  height: 24px;
+}
+
+.pomodoro-reminder-add > button {
+  flex: 1;
+  height: 24px;
+  padding: 0 8px;
+}
+
+/* 声音设置 */
+.pomodoro-sounds {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 3px;
+}
+
+.pomodoro-sound-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.pomodoro-shell input[type="checkbox"].pomodoro-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: rgba(9, 11, 26, 0.72);
+  background-image: radial-gradient(circle closest-side, #fff2f8 82%, rgba(255, 242, 248, 0) 86%);
+  background-position: 3px center;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: background-color 0.18s ease, background-position 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pomodoro-shell input[type="checkbox"].pomodoro-switch:checked {
+  background-color: var(--pink-400);
+  background-position: calc(100% - 3px) center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32), 0 0 10px rgba(233, 133, 179, 0.45);
+}
+
+.pomodoro-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 9.5px;
+}
+
+.pomodoro-volume-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pomodoro-volume output {
+  color: var(--pink-100);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-shell input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink-400) var(--fill, 60%), rgba(255, 255, 255, 0.16) var(--fill, 60%));
+  cursor: pointer;
+}
+
+.pomodoro-shell input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff5fa;
+  box-shadow: 0 0 0 3px rgba(233, 133, 179, 0.35), 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.pomodoro-shell input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff5fa;
+  box-shadow: 0 0 0 3px rgba(233, 133, 179, 0.35);
+}
+
+/* 机身控制条：薄荷色铭牌 */
+.pomodoro-footer {
+  position: absolute;
+  left: 10.2%;
+  top: 80.6%;
+  width: 65.8%;
+  height: 8%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pomodoro-footer span {
+  color: var(--mint-ink);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.pomodoro-footer button {
+  padding: 3px 8px;
+  border: 1px solid rgba(46, 26, 38, 0.4);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #4c313e, #3b2630);
+  box-shadow: 0 2px 6px rgba(28, 44, 38, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #ffdceb;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pomodoro-footer button:hover:not(:disabled) {
+  border-color: rgba(46, 26, 38, 0.55);
+  background: linear-gradient(180deg, #5b3a49, #452d39);
+  color: #fff1f7;
+}
+
+.pomodoro-footer button:focus-visible {
+  outline: 2px solid #2f4a44;
+  outline-offset: 2px;
+}
+
+.pomodoro-shell [hidden] {
+  display: none !important;
+}
+
+@keyframes pomodoro-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 7px rgba(245, 138, 188, 0.85);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(245, 138, 188, 0.45);
+  }
+}
+
+@keyframes pomodoro-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pomodoro-shell[data-running="true"] .pomodoro-screen-glow,
+  .pomodoro-shell[data-running="true"] .pomodoro-led {
+    animation: none;
+  }
+
+  .pomodoro-shell progress::-webkit-progress-value {
+    transition: none;
+  }
+}
