@@ -532,10 +532,17 @@ impl PomodoroManager {
         let _ = app.emit("pomodoro-state", snapshot);
     }
     pub fn checkpoint(&self) {
-        let mut state = self.inner.lock().unwrap();
+        let _ = self.checkpoint_for_update();
+    }
+    pub fn checkpoint_for_update(&self) -> Result<(), String> {
+        let mut state = self.inner.lock().map_err(|_| "计时锁不可用")?;
         state.tick();
         self.save(&mut state.snapshot);
+        if let Some(error) = &state.snapshot.persistence_error {
+            return Err(error.clone());
+        }
         self.audio.send(AudioCommand::Stop);
+        Ok(())
     }
     pub fn spawn(app: tauri::AppHandle) {
         std::thread::spawn(move || {
@@ -708,6 +715,33 @@ fn create_or_show_window(app: &tauri::AppHandle) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn update_checkpoint_rejects_write_failure_and_can_retry() {
+        let dir = std::env::temp_dir().join(format!("zzz-update-checkpoint-{}-{}",
+            std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        // 目标被目录占用，原子提交必然失败，不依赖管理员权限或磁盘容量。
+        std::fs::create_dir(&path).unwrap();
+        let manager = PomodoroManager {
+            inner: Mutex::new(started(2)),
+            window_creation: Mutex::new(()),
+            path: path.clone(),
+            audio: AudioService::new(),
+        };
+        assert!(manager.checkpoint_for_update().unwrap_err().contains("进度保存失败"));
+        let failed = manager.snapshot();
+        assert!(failed.persistence_error.is_some());
+        assert_eq!(failed.phase, "focus");
+        std::fs::remove_dir(&path).unwrap();
+        manager.checkpoint_for_update().unwrap();
+        assert!(manager.snapshot().persistence_error.is_none());
+        let saved: Snapshot = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(saved.session_id, failed.session_id);
+        assert_eq!(saved.phase, failed.phase);
+        assert!(saved.remaining_ms <= failed.remaining_ms);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
     fn started(rounds: u32) -> ClockState {
         let mut state = ClockState::new(Snapshot::default());
         state

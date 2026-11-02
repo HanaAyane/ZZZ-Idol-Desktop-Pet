@@ -756,6 +756,12 @@ fn require_settings_window(window: &WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn prepare_for_update(window: WebviewWindow) -> Result<(), String> {
+    require_settings_window(&window)?;
+    window.app_handle().state::<pomodoro::PomodoroManager>().checkpoint_for_update()
+}
+
+#[tauri::command]
 async fn drag_pet_window(
     window: WebviewWindow,
     grab_x_css: f64,
@@ -1224,6 +1230,7 @@ pub fn run() {
         .manage(WindowLiftManager::default())
         .manage(room::RoomManager::default())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             log::info!(
                 target: "desktop_pet::lifecycle",
@@ -1243,6 +1250,7 @@ pub fn run() {
             None,
         ))
         .invoke_handler(tauri::generate_handler![
+            prepare_for_update,
             pomodoro::get_pomodoro_state,
             pomodoro::pomodoro_action,
             pomodoro::set_pomodoro_visible,

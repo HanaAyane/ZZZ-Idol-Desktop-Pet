@@ -1063,3 +1063,20 @@ body[data-window="settings"] {
   }
 
 }
+
+
+.update-install:not([hidden]) {
+  display: inline-block;
+  margin: 12px 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 170, 205, 0.45);
+  border-radius: 12px;
+  color: #ffe7f0;
+  background: rgba(224, 118, 160, 0.22);
+  font: inherit;
+  cursor: pointer;
+}
+
+.update-install:disabled { opacity: 0.6; cursor: wait; }
+.update-progress:not([hidden]) { display: block; width: 100%; margin: 12px 0; accent-color: #e9a3be; }
+.update-notes { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.6; max-height: 220px; overflow: auto; }

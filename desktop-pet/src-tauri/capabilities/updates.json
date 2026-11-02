@@ -1,16 +1,26 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "updates",
-  "description": "Allow settings to read the installed version and open this project's GitHub Releases.",
-  "windows": ["settings"],
+  "description": "仅设置页可以检查、下载和安装签名更新，并打开本仓库发布页。",
+  "windows": [
+    "settings"
+  ],
   "permissions": [
     "core:app:allow-version",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
-        { "url": "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases" },
-        { "url": "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/*" }
+        {
+          "url": "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases"
+        },
+        {
+          "url": "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/tag/*"
+        }
       ]
-    }
+    },
+    "updater:allow-check",
+    "updater:allow-download",
+    "updater:allow-install",
+    "core:resources:allow-close"
   ]
 }

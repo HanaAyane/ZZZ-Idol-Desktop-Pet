@@ -2,6 +2,8 @@ import { enterRoom, showRoom } from "../room/client";
 import { getState as getPomodoroState, setVisible as setPomodoroVisible, subscribe as subscribePomodoro } from "../pomodoro/client";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
+import { installVerifiedUpdate, prepareUpdateState, type InstallableUpdate } from "./oneClickUpdate";
 import { getVersion } from "@tauri-apps/api/app";
 import { version as previewVersion } from "../../package.json";
 import { checkForUpdates, RELEASES_URL } from "./updates";
@@ -46,6 +48,9 @@ export class SettingsApp {
   private settings: AppSettings | null = null;
   private coordinationSnapshot: CoordinationSnapshot | null = null;
   private updateRequest: AbortController | null = null;
+  private pendingUpdate: InstallableUpdate | null = null;
+  private installingUpdate = false;
+  private queuedSave: Promise<void> = Promise.resolve();
   private disposed = false;
 
   constructor(private readonly root: HTMLElement) {
@@ -159,10 +164,13 @@ export class SettingsApp {
         <section class="settings-section" aria-labelledby="updates-title">
           <div class="section-heading"><div><p class="eyebrow">UPDATES</p><h2 id="updates-title">软件更新</h2></div></div>
           <div class="setting-list"><div class="setting-row">
-            <span><strong data-current-version>正在读取当前版本…</strong><small>检查 GitHub 最新正式版，下载适合你系统的安装包完成更新。</small></span>
+            <span><strong data-current-version>正在读取当前版本…</strong><small>检查最新正式版；Windows 支持下载签名更新并安装重启，也可手动下载。</small></span>
             <button type="button" data-check-updates>检查更新</button>
           </div></div>
           <output class="update-status" data-update-status role="status" aria-live="polite">点击“检查更新”获取最新版本。</output>
+          <button type="button" class="update-install" data-install-update hidden>一键更新并重启</button>
+          <progress class="update-progress" data-update-progress max="100" hidden aria-label="更新下载进度"></progress>
+          <pre class="update-notes" data-update-notes hidden></pre>
           <nav class="author-links update-links" aria-label="软件更新">
             <a data-update-link href="${RELEASES_URL}" target="_blank" rel="noopener noreferrer">查看 GitHub Release <span aria-hidden="true">↗</span></a>
           </nav>
@@ -233,11 +241,15 @@ export class SettingsApp {
   dispose(): void {
     this.disposed = true;
     this.updateRequest?.abort();
+    if (!this.installingUpdate) void this.releaseUpdate();
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.unlisteners.splice(0).forEach((unlisten) => unlisten());
   }
 
   private bindControls(): void {
+    this.requireElement("[data-install-update]").addEventListener("click", () => {
+      void this.installUpdate();
+    });
     this.requireElement("[data-check-updates]").addEventListener("click", () => {
       void this.checkUpdates();
     });
@@ -355,7 +367,7 @@ export class SettingsApp {
   }
 
   private async checkUpdates(): Promise<void> {
-    if (this.updateRequest) return;
+    if (this.updateRequest || this.installingUpdate) return;
     const request = new AbortController();
     this.updateRequest = request;
     const button = this.requireElement<HTMLButtonElement>("[data-check-updates]");
@@ -368,13 +380,38 @@ export class SettingsApp {
     link.href = RELEASES_URL;
     link.textContent = "查看 GitHub Release ↗";
     this.requireElement<HTMLOutputElement>("[data-update-link-error]").hidden = true;
+    this.requireElement<HTMLButtonElement>("[data-install-update]").hidden = true;
+    this.requireElement("[data-update-progress]").hidden = true;
+    this.requireElement("[data-update-notes]").hidden = true;
     try {
+      await this.releaseUpdate();
       const currentVersion = await this.readCurrentVersion();
       if (this.disposed) return;
+      if (window.__TAURI_INTERNALS__) {
+        try {
+          const { check } = await import("@tauri-apps/plugin-updater");
+          const update = await check({ timeout: 10_000 });
+          if (this.disposed) {
+            await update?.close();
+            return;
+          }
+          if (update) {
+            this.pendingUpdate = update;
+            status.textContent = `发现新版本 v${update.version}（当前 v${currentVersion}）。点击一键更新，安装后将重启桌宠。`;
+            this.requireElement<HTMLButtonElement>("[data-install-update]").hidden = false;
+            const notes = this.requireElement("[data-update-notes]");
+            notes.textContent = update.body || "此版本未提供更新说明。";
+            notes.hidden = false;
+            return;
+          }
+        } catch {
+          // 签名清单不可用或当前平台暂不支持时，保留原有手动更新入口。
+        }
+      }
       const result = await checkForUpdates(currentVersion, { signal: request.signal });
       if (this.disposed) return;
       if (result.status === "available") {
-        status.textContent = `发现新版本 v${result.latestVersion}（当前 v${currentVersion}）。请前往 GitHub 下载并安装。`;
+        status.textContent = `发现新版本 v${result.latestVersion}（当前 v${currentVersion}）。请前往 GitHub 下载并安装（此版本暂未提供可用的一键更新包）。`;
         link.textContent = "前往 GitHub 更新 ↗";
       } else if (result.status === "current") {
         status.textContent = `当前已是最新正式版 v${currentVersion}。`;
@@ -391,6 +428,68 @@ export class SettingsApp {
       if (!this.disposed) {
         button.disabled = false;
         button.textContent = "检查更新";
+      }
+    }
+  }
+
+  private async releaseUpdate(): Promise<void> {
+    const update = this.pendingUpdate;
+    this.pendingUpdate = null;
+    try { await update?.close(); } catch { /* 关闭页面时资源可能已释放。 */ }
+  }
+
+  private async installUpdate(): Promise<void> {
+    const update = this.pendingUpdate;
+    if (!update || this.installingUpdate || this.updateRequest) return;
+    this.installingUpdate = true;
+    const button = this.requireElement<HTMLButtonElement>("[data-install-update]");
+    const checkButton = this.requireElement<HTMLButtonElement>("[data-check-updates]");
+    const progress = this.requireElement<HTMLProgressElement>("[data-update-progress]");
+    const status = this.requireElement("[data-update-status]");
+    const controls = Array.from(this.root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input, select, button"));
+    const disabled = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    progress.hidden = false;
+    progress.removeAttribute("value");
+    status.classList.remove("settings-status--error");
+    status.textContent = "正在下载更新，下载完成后验证签名并安装重启…";
+    try {
+      await installVerifiedUpdate(update, async () => {
+        if (this.disposed) throw new Error("设置页已关闭，本次安装已取消。");
+        if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
+        this.saveTimer = null;
+        await this.queuedSave;
+        await prepareUpdateState(
+          () => this.pendingPatch,
+          () => { this.pendingPatch = {}; },
+          updateAppSettings,
+          () => invoke("prepare_for_update"),
+        );
+      }, state => {
+        if (this.disposed) return;
+        if (state.phase === "downloading") {
+          const mb = (state.downloaded / 1024 / 1024).toFixed(1);
+          if (state.total && state.total > 0) {
+            progress.value = Math.min(100, state.downloaded / state.total * 100);
+            status.textContent = `正在下载更新：${Math.floor(progress.value)}%（${mb} MB）`;
+          } else status.textContent = `正在下载更新：${mb} MB`;
+        } else if (state.phase === "preparing") status.textContent = "签名验证通过，正在保存设置与计时状态…";
+        else status.textContent = "正在启动安装程序，完成后将自动重启桌宠…";
+      });
+    } catch (error) {
+      if (!this.disposed) {
+        status.textContent = `更新未完成：${String(error)}。可重新检查更新，或手动下载安装。`;
+        status.classList.add("settings-status--error");
+      }
+    } finally {
+      this.installingUpdate = false;
+      await this.releaseUpdate();
+      if (!this.disposed) {
+        controls.forEach((control, index) => { control.disabled = disabled[index]; });
+        checkButton.disabled = false;
+        button.hidden = true;
+        button.disabled = false;
+        progress.hidden = true;
       }
     }
   }
@@ -442,10 +541,11 @@ export class SettingsApp {
       this.saveTimer = null;
       const pending = this.pendingPatch;
       this.pendingPatch = {};
-      void updateAppSettings(pending).then((settings) => {
+      this.queuedSave = updateAppSettings(pending).then((settings) => {
         this.renderSettings(settings);
         saveStatus.textContent = "已自动保存";
       }).catch((error) => {
+        this.pendingPatch = { ...pending, ...this.pendingPatch };
         saveStatus.textContent = `保存失败：${String(error)}`;
       });
     }, delay);
