@@ -442,6 +442,7 @@ export class SettingsApp {
     const update = this.pendingUpdate;
     if (!update || this.installingUpdate || this.updateRequest) return;
     this.installingUpdate = true;
+    this.closeSelects();
     const button = this.requireElement<HTMLButtonElement>("[data-install-update]");
     const checkButton = this.requireElement<HTMLButtonElement>("[data-check-updates]");
     const progress = this.requireElement<HTMLProgressElement>("[data-update-progress]");
@@ -539,14 +540,21 @@ export class SettingsApp {
     saveStatus.textContent = "正在保存…";
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
-      const pending = this.pendingPatch;
-      this.pendingPatch = {};
-      this.queuedSave = updateAppSettings(pending).then((settings) => {
-        this.renderSettings(settings);
-        saveStatus.textContent = "已自动保存";
-      }).catch((error) => {
-        this.pendingPatch = { ...pending, ...this.pendingPatch };
-        saveStatus.textContent = `保存失败：${String(error)}`;
+      // Read the latest pending edits only after older writes have settled.
+      this.queuedSave = this.queuedSave.then(async () => {
+        const pending = this.pendingPatch;
+        this.pendingPatch = {};
+        if (!Object.keys(pending).length) return;
+        try {
+          const settings = await updateAppSettings(pending);
+          if (!this.disposed) {
+            this.renderSettings(settings);
+            saveStatus.textContent = "已自动保存";
+          }
+        } catch (error) {
+          this.pendingPatch = { ...pending, ...this.pendingPatch };
+          if (!this.disposed) saveStatus.textContent = `保存失败：${String(error)}`;
+        }
       });
     }, delay);
   }
@@ -617,6 +625,7 @@ export class SettingsApp {
         if (focusButton) button.focus();
       };
       const open = (direction: 1 | -1): void => {
+        if (this.installingUpdate || button.disabled) return;
         this.closeSelects(control);
         list.hidden = false;
         button.setAttribute("aria-expanded", "true");
@@ -627,6 +636,7 @@ export class SettingsApp {
         target?.focus();
       };
       const choose = (option: HTMLLIElement): void => {
+        if (this.installingUpdate || button.disabled || input.disabled) return;
         const value = option.dataset.value ?? "";
         close(true);
         if (input.value === value) return;

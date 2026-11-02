@@ -101,7 +101,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgzOTA4Njc0NEJEOEQ2MkUKUldRdTF0aExkSWFRZytsYUFSZVVQanJraWQ1cUM1c1h0L1gwWmpaYTNqOVRZeUE5aSticzZVWEIK",
       "endpoints": [
         "https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/latest/download/updater.json"
       ],
