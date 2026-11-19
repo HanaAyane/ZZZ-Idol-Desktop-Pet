@@ -6,7 +6,7 @@
 
 让爱芮、南宫、千夏住进你的桌面，陪你互动、漫步与专注。
 
-[下载安装](#下载安装) · [使用指南](#使用指南) · [反馈问题](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/issues)
+[下载安装](#下载安装) · [妄想天使活动室](#妄想天使活动室) · [使用指南](#使用指南) · [反馈问题](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/issues)
 
 [![Releases 附件累计下载次数](https://img.shields.io/github/downloads/HanaAyane/ZZZ-Idol-Desktop-Pet/total.svg?style=flat-square&label=total%20downloads)](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases)
 [![最新版附件下载次数](https://img.shields.io/github/downloads/HanaAyane/ZZZ-Idol-Desktop-Pet/latest/total.svg?style=flat-square&label=latest%20downloads)](https://github.com/HanaAyane/ZZZ-Idol-Desktop-Pet/releases/latest)
@@ -24,6 +24,23 @@
 - **自由漫步** — 横向、斜向六个方向移动，频率和速度随你调整。
 - **窗口托举** — 将角色拖到普通窗口底边，让她们贴边托举；也可开启漫步时自动托举。
 - **专注陪伴** — 番茄钟与自定义计时两种模式，支持不等间隔提醒、暂停与继续，关闭窗口后仍在后台计时。
+
+## 妄想天使活动室
+
+爱芮、南宫和千夏在房间里会自己走动，偶尔坐上沙发或躺进坐垫。你也可以把她们拖到家具上休息，或把房间缩小放在桌角，忙自己的事时偶尔看一眼。
+
+- 在设置的「妄想天使活动室」里点击「打开活动室」，再选「邀请三人入住」，也可以把桌宠逐个拖进去。把角色拖出房间，或关闭活动室，她们就会回到桌面。
+- 拖动标题栏可移动房间，拖动窗口边缘可等比缩放。标题栏可以切换日间、夜间或跟随本机时间，也可以暂停室内漫步。
+
+<p align="center">
+  <strong>观察三小只的日常</strong><br>
+  <a href="assets/readme/activity-room-day.webp"><img src="assets/readme/activity-room-day.webp" width="800" alt="日间活动室中，一位角色躺在坐垫上，另外两位站在地毯上，旁边开着独立番茄钟"></a>
+</p>
+
+<p align="center">
+  <strong>缩到桌角，安静陪伴</strong><br>
+  <a href="assets/readme/activity-room-night.webp"><img src="assets/readme/activity-room-night.webp" width="800" alt="缩小后的夜间活动室位于 macOS 桌面右上角"></a>
+</p>
 
 ## 实际效果
 
